@@ -75,6 +75,7 @@ def plot_confusion_matrix(y_true, y_pred, title, filename):
     ax.set_ylabel("Actual")
     plt.tight_layout()
     plt.savefig(os.path.join(plots_dir, filename), dpi=120)
+    plt.show()
     plt.close()
     print(f"Saved: {filename}")
 
@@ -113,6 +114,7 @@ ax.set_xticklabels(ax.get_xticklabels(), rotation=0)
 ax.legend(loc="lower right")
 plt.tight_layout()
 plt.savefig(os.path.join(plots_dir, "11_model_comparison.png"), dpi=120)
+plt.show()
 plt.close()
 print("Saved: 11_model_comparison.png")
 
