@@ -118,5 +118,165 @@ plt.show()
 plt.close()
 print("Saved: 11_model_comparison.png")
 
+# ============================================================
+# MIXED REVIEW ANALYSIS
+# ============================================================
+print("\n" + "-" * 80)
+print("MIXED REVIEW ANALYSIS")
+
+# ---- Method 1: Borderline zone (score near decision boundary) ----
+# Captures reviews where the model is least confident.
+# These are often ambiguous reviews where sentiment signals are weak.
+BORDER_LOW = -0.2
+BORDER_HIGH = 0.2
+
+vader_borderline = df[
+    (df["vader_compound"] >= BORDER_LOW) & (df["vader_compound"] <= BORDER_HIGH)
+].copy()
+
+tb_borderline = df[
+    (df["textblob_polarity"] >= BORDER_LOW) & (df["textblob_polarity"] <= BORDER_HIGH)
+].copy()
+
+print(f"\n[Method 1] Borderline zone ({BORDER_LOW} to {BORDER_HIGH}):")
+print(f"  VADER    borderline reviews : {len(vader_borderline)}")
+print(f"  TextBlob borderline reviews : {len(tb_borderline)}")
+
+# Misclassified within borderline — predicted neutral but true label != neutral
+vader_border_misc = vader_borderline[
+    (vader_borderline["vader_pred"] == "neutral")
+    & (vader_borderline["sentiment"] != "neutral")
+]
+print(
+    f"\n  VADER predicted neutral but true label is pos/neg: {len(vader_border_misc)}"
+)
+if len(vader_border_misc) > 0:
+    print(
+        vader_border_misc[["sentiment", "vader_pred", "vader_compound", "vader_text"]]
+        .head(3)
+        .to_string()
+    )
+
+# ---- Method 2: Truly mixed reviews (strong pos AND strong neg signals) ----
+# A truly mixed review has both high positive and high negative sub-scores
+# simultaneously. This is more rigorous than just looking at compound alone.
+MIXED_POS_THRESH = 0.15
+MIXED_NEG_THRESH = 0.15
+
+truly_mixed = df[
+    (df["vader_pos"] > MIXED_POS_THRESH) & (df["vader_neg"] > MIXED_NEG_THRESH)
+].copy()
+
+print(f"\n[Method 2] Truly mixed reviews")
+print(f"  (vader_pos > {MIXED_POS_THRESH} AND vader_neg > {MIXED_NEG_THRESH})")
+print(f"  Count: {len(truly_mixed)}")
+
+if len(truly_mixed) > 0:
+    print(f"\n  Sentiment distribution in truly mixed reviews:")
+    print(truly_mixed["sentiment"].value_counts().to_string())
+    print(f"\n  Sample of truly mixed reviews:")
+    cols = [
+        "sentiment",
+        "vader_pred",
+        "vader_pos",
+        "vader_neg",
+        "vader_compound",
+        "vader_text",
+    ]
+    print(truly_mixed[cols].head(5).to_string())
+
+# ---- Scatter plot: VADER compound score by true sentiment ----
+# Visualizes how well the compound score separates the three classes
+# and highlights where the model is confused.
+color_map = {"positive": "steelblue", "neutral": "gold", "negative": "tomato"}
+fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+
+# VADER scatter
+for label, grp in df.groupby("sentiment"):
+    axes[0].scatter(
+        grp.index,
+        grp["vader_compound"],
+        label=label,
+        alpha=0.4,
+        s=10,
+        color=color_map[label],
+    )
+axes[0].axhline(
+    y=0.05, color="green", linestyle="--", linewidth=1, label="pos threshold"
+)
+axes[0].axhline(
+    y=-0.05, color="red", linestyle="--", linewidth=1, label="neg threshold"
+)
+axes[0].set_title("VADER Compound Score by True Sentiment")
+axes[0].set_xlabel("Review Index")
+axes[0].set_ylabel("Compound Score")
+axes[0].legend(markerscale=2, fontsize=8)
+
+# TextBlob scatter
+for label, grp in df.groupby("sentiment"):
+    axes[1].scatter(
+        grp.index,
+        grp["textblob_polarity"],
+        label=label,
+        alpha=0.4,
+        s=10,
+        color=color_map[label],
+    )
+axes[1].axhline(
+    y=0.05, color="green", linestyle="--", linewidth=1, label="pos threshold"
+)
+axes[1].axhline(
+    y=-0.05, color="red", linestyle="--", linewidth=1, label="neg threshold"
+)
+axes[1].set_title("TextBlob Polarity Score by True Sentiment")
+axes[1].set_xlabel("Review Index")
+axes[1].set_ylabel("Polarity Score")
+axes[1].legend(markerscale=2, fontsize=8)
+
+plt.tight_layout()
+plt.savefig(os.path.join(plots_dir, "12_polarity_scatter.png"), dpi=120)
+plt.show()
+plt.close()
+print("\nSaved: 12_polarity_scatter.png")
+
+# ---- Distribution plot: compound score histogram by true sentiment ----
+fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+
+for label in label_order:
+    axes[0].hist(
+        df[df["sentiment"] == label]["vader_compound"],
+        bins=40,
+        alpha=0.5,
+        label=label,
+        color=color_map[label],
+    )
+axes[0].axvline(x=0.05, color="green", linestyle="--", linewidth=1)
+axes[0].axvline(x=-0.05, color="red", linestyle="--", linewidth=1)
+axes[0].set_title("VADER Compound Score Distribution by Sentiment")
+axes[0].set_xlabel("Compound Score")
+axes[0].set_ylabel("Count")
+axes[0].legend()
+
+for label in label_order:
+    axes[1].hist(
+        df[df["sentiment"] == label]["textblob_polarity"],
+        bins=40,
+        alpha=0.5,
+        label=label,
+        color=color_map[label],
+    )
+axes[1].axvline(x=0.05, color="green", linestyle="--", linewidth=1)
+axes[1].axvline(x=-0.05, color="red", linestyle="--", linewidth=1)
+axes[1].set_title("TextBlob Polarity Distribution by Sentiment")
+axes[1].set_xlabel("Polarity Score")
+axes[1].set_ylabel("Count")
+axes[1].legend()
+
+plt.tight_layout()
+plt.savefig(os.path.join(plots_dir, "13_polarity_distribution.png"), dpi=120)
+plt.show()
+plt.close()
+print("Saved: 13_polarity_distribution.png")
+
 print("\n" + "-" * 80)
 print("Evaluation complete.")
