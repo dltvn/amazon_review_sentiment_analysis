@@ -28,6 +28,8 @@ test_df = pd.read_csv(os.path.join(data_dir, "test.csv"))
 
 lr_model = joblib.load(os.path.join(data_dir, "logistic_regression.pkl"))
 svm_model = joblib.load(os.path.join(data_dir, "svm.pkl"))
+lgbm_model = joblib.load(os.path.join(data_dir, "lightgbm.pkl"))
+mlp_model = joblib.load(os.path.join(data_dir, "mlp.pkl"))
 training_results = joblib.load(os.path.join(data_dir, "training_results.pkl"))
 
 print(f"Loaded test data: {len(y_test)} samples")
@@ -44,6 +46,8 @@ print("ML Model Testing")
 
 lr_pred = lr_model.predict(X_test_tfidf)
 svm_pred = svm_model.predict(X_test_tfidf)
+lgbm_pred = lgbm_model.predict(X_test_tfidf)
+mlp_pred = mlp_model.predict(X_test_tfidf)
 
 # ---- lexicon model predictions on test data ----
 # To compare "apples to apples", we run VADER and TextBlob on the same test set
@@ -148,14 +152,25 @@ def calculate_metrics(name, y_true, y_pred):
 
 lr_metrics = calculate_metrics("Logistic Regression", y_test, lr_pred)
 svm_metrics = calculate_metrics("SVM", y_test, svm_pred)
+lgbm_metrics = calculate_metrics("LightGBM", y_test, lgbm_pred)
+mlp_metrics = calculate_metrics("MLP", y_test, mlp_pred)
 vader_metrics = calculate_metrics("VADER", y_test, vader_pred)
 textblob_metrics = calculate_metrics("TextBlob", y_test, textblob_pred)
 
-# ---- comparison table (all 4 models) ----
+# ---- comparison table (all 6 models) ----
 print("\n" + "-" * 80)
 print("Comparison Table - All Models on Same Test Data (600 reviews)")
 
-comparison = pd.DataFrame([lr_metrics, svm_metrics, vader_metrics, textblob_metrics])
+comparison = pd.DataFrame(
+    [
+        lr_metrics,
+        svm_metrics,
+        lgbm_metrics,
+        mlp_metrics,
+        vader_metrics,
+        textblob_metrics,
+    ]
+)
 comparison = comparison.set_index("Model")
 print(comparison.to_string(float_format=lambda x: f"{x:.4f}"))
 
@@ -195,16 +210,22 @@ plot_confusion_matrix(
     y_test, svm_pred, "SVM Confusion Matrix", "06_svm_confusion_matrix.png"
 )
 plot_confusion_matrix(
+    y_test, lgbm_pred, "LightGBM Confusion Matrix", "07_lgbm_confusion_matrix.png"
+)
+plot_confusion_matrix(
+    y_test, mlp_pred, "MLP Confusion Matrix", "08_mlp_confusion_matrix.png"
+)
+plot_confusion_matrix(
     y_test,
     vader_pred,
     "VADER Confusion Matrix (Test Set)",
-    "07_vader_confusion_matrix.png",
+    "09_vader_confusion_matrix.png",
 )
 plot_confusion_matrix(
     y_test,
     textblob_pred,
     "TextBlob Confusion Matrix (Test Set)",
-    "08_textblob_confusion_matrix.png",
+    "10_textblob_confusion_matrix.png",
 )
 
 # ---- side-by-side comparison bar chart ----
@@ -225,6 +246,18 @@ metrics_df = pd.DataFrame(
             svm_metrics["Recall"],
             svm_metrics["F1"],
         ],
+        "LightGBM": [
+            lgbm_metrics["Accuracy"],
+            lgbm_metrics["Precision"],
+            lgbm_metrics["Recall"],
+            lgbm_metrics["F1"],
+        ],
+        "MLP": [
+            mlp_metrics["Accuracy"],
+            mlp_metrics["Precision"],
+            mlp_metrics["Recall"],
+            mlp_metrics["F1"],
+        ],
         "VADER": [
             vader_metrics["Accuracy"],
             vader_metrics["Precision"],
@@ -241,33 +274,38 @@ metrics_df = pd.DataFrame(
     index=["Accuracy", "Precision", "Recall", "F1"],
 )
 
-fig, ax = plt.subplots(figsize=(12, 6))
+fig, ax = plt.subplots(figsize=(14, 6))
 metrics_df.plot(kind="bar", ax=ax, edgecolor="white", width=0.8)
-ax.set_title("ML vs Lexicon Models - Performance Comparison (Same Test Data)")
+ax.set_title("All Models - Performance Comparison (Same Test Data)")
 ax.set_ylabel("Score")
 ax.set_ylim(0, 1)
 ax.set_xticklabels(ax.get_xticklabels(), rotation=0)
-ax.legend(loc="lower right")
+ax.legend(loc="lower right", fontsize=8)
 plt.tight_layout()
-plt.savefig(os.path.join(plots_dir, "09_model_comparison.png"), dpi=120)
+plt.savefig(os.path.join(plots_dir, "11_model_comparison.png"), dpi=120)
 plt.close()
-print("Saved: 09_model_comparison.png")
+print("Saved: 11_model_comparison.png")
 
 # ML vs Lexicon grouped comparison
-fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+fig, axes = plt.subplots(1, 2, figsize=(16, 5))
 
-# ML models
-ml_df = metrics_df[["Logistic Regression", "SVM"]]
-ml_df.plot(kind="bar", ax=axes[0], edgecolor="white", color=["steelblue", "coral"])
+# ML models (4 models)
+ml_df = metrics_df[["Logistic Regression", "SVM", "LightGBM", "MLP"]]
+ml_df.plot(
+    kind="bar",
+    ax=axes[0],
+    edgecolor="white",
+    color=["steelblue", "coral", "forestgreen", "purple"],
+)
 axes[0].set_title("Machine Learning Models")
 axes[0].set_ylabel("Score")
 axes[0].set_ylim(0, 1)
 axes[0].set_xticklabels(axes[0].get_xticklabels(), rotation=0)
-axes[0].legend(loc="lower right")
+axes[0].legend(loc="lower right", fontsize=8)
 
 # Lexicon models
 lex_df = metrics_df[["VADER", "TextBlob"]]
-lex_df.plot(kind="bar", ax=axes[1], edgecolor="white", color=["forestgreen", "purple"])
+lex_df.plot(kind="bar", ax=axes[1], edgecolor="white", color=["teal", "orange"])
 axes[1].set_title("Lexicon Models")
 axes[1].set_ylabel("Score")
 axes[1].set_ylim(0, 1)
@@ -275,9 +313,74 @@ axes[1].set_xticklabels(axes[1].get_xticklabels(), rotation=0)
 axes[1].legend(loc="lower right")
 
 plt.tight_layout()
-plt.savefig(os.path.join(plots_dir, "10_ml_vs_lexicon.png"), dpi=120)
+plt.savefig(os.path.join(plots_dir, "12_ml_vs_lexicon.png"), dpi=120)
 plt.close()
-print("Saved: 10_ml_vs_lexicon.png")
+print("Saved: 12_ml_vs_lexicon.png")
+
+# ---- ML models comparison chart ----
+# Detailed comparison of just the ML models
+fig, ax = plt.subplots(figsize=(12, 6))
+ml_colors = ["#3498db", "#e74c3c", "#2ecc71", "#9b59b6"]
+ml_df.plot(kind="bar", ax=ax, edgecolor="white", color=ml_colors, width=0.8)
+ax.set_title("Machine Learning Models - Detailed Performance Comparison")
+ax.set_ylabel("Score")
+ax.set_ylim(0, 1)
+ax.set_xticklabels(ax.get_xticklabels(), rotation=0)
+ax.legend(loc="lower right")
+
+# Add value labels on bars
+for container in ax.containers:
+    ax.bar_label(container, fmt="%.2f", fontsize=7, rotation=90, padding=3)
+
+plt.tight_layout()
+plt.savefig(os.path.join(plots_dir, "13_ml_models_comparison.png"), dpi=120)
+plt.close()
+print("Saved: 13_ml_models_comparison.png")
+
+# ---- Per-class performance analysis ----
+print("\n" + "-" * 80)
+print("Per-Class Performance Analysis")
+
+from sklearn.metrics import precision_recall_fscore_support
+
+
+def get_per_class_metrics(y_true, y_pred, model_name):
+    prec, rec, f1, sup = precision_recall_fscore_support(
+        y_true, y_pred, labels=label_order, zero_division=0
+    )
+    return {
+        "Model": model_name,
+        "Positive F1": f1[0],
+        "Neutral F1": f1[1],
+        "Negative F1": f1[2],
+    }
+
+
+per_class_data = [
+    get_per_class_metrics(y_test, lr_pred, "Logistic Regression"),
+    get_per_class_metrics(y_test, svm_pred, "SVM"),
+    get_per_class_metrics(y_test, lgbm_pred, "LightGBM"),
+    get_per_class_metrics(y_test, mlp_pred, "MLP"),
+    get_per_class_metrics(y_test, vader_pred, "VADER"),
+    get_per_class_metrics(y_test, textblob_pred, "TextBlob"),
+]
+
+per_class_df = pd.DataFrame(per_class_data).set_index("Model")
+print("\nF1 Score by Class:")
+print(per_class_df.to_string(float_format=lambda x: f"{x:.4f}"))
+
+# Per-class F1 chart
+fig, ax = plt.subplots(figsize=(12, 6))
+per_class_df.plot(kind="bar", ax=ax, edgecolor="white", width=0.8)
+ax.set_title("F1 Score by Sentiment Class - All Models")
+ax.set_ylabel("F1 Score")
+ax.set_ylim(0, 1)
+ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha="right")
+ax.legend(loc="lower right")
+plt.tight_layout()
+plt.savefig(os.path.join(plots_dir, "14_per_class_f1.png"), dpi=120)
+plt.close()
+print("Saved: 14_per_class_f1.png")
 
 # ---- save results ----
 print("\n" + "-" * 80)
@@ -287,11 +390,45 @@ print("Saving Results")
 comparison.to_csv(os.path.join(data_dir, "model_comparison.csv"))
 print("Saved: model_comparison.csv")
 
+# Save per-class metrics
+per_class_df.to_csv(os.path.join(data_dir, "per_class_metrics.csv"))
+print("Saved: per_class_metrics.csv")
+
 # Save predictions for analysis
 test_df["lr_pred"] = lr_pred
 test_df["svm_pred"] = svm_pred
+test_df["lgbm_pred"] = lgbm_pred
+test_df["mlp_pred"] = mlp_pred
 test_df.to_csv(os.path.join(data_dir, "test_predictions.csv"), index=False)
 print("Saved: test_predictions.csv")
+
+# ---- Model ranking and insights ----
+print("\n" + "-" * 80)
+print("Model Ranking and Insights")
+
+# Rank models by F1 score
+ranking = comparison.sort_values("F1", ascending=False)
+print("\nModels ranked by F1 Score:")
+for i, (model, row) in enumerate(ranking.iterrows(), 1):
+    print(f"  {i}. {model:<25} F1: {row['F1']:.4f}")
+
+# Best model analysis
+best_model = ranking.index[0]
+best_f1 = ranking.iloc[0]["F1"]
+print(f"\nBest performing model: {best_model} (F1: {best_f1:.4f})")
+
+# ML vs Lexicon comparison
+ml_models = ["Logistic Regression", "SVM", "LightGBM", "MLP"]
+lexicon_models = ["VADER", "TextBlob"]
+
+ml_avg_f1 = comparison.loc[ml_models, "F1"].mean()
+lex_avg_f1 = comparison.loc[lexicon_models, "F1"].mean()
+
+print(f"\nML models average F1: {ml_avg_f1:.4f}")
+print(f"Lexicon models average F1: {lex_avg_f1:.4f}")
+print(
+    f"ML improvement over lexicon: {((ml_avg_f1 - lex_avg_f1) / lex_avg_f1 * 100):.1f}%"
+)
 
 print("\n" + "-" * 80)
 print("Evaluation complete.")
