@@ -1,155 +1,241 @@
 import os
 import re
+import json
 import pandas as pd
 import emoji
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.model_selection import train_test_split
-import joblib
 
-# ---- load 2000-review sample ----
+# ---- load dataset ----
 script_dir = os.path.dirname(os.path.abspath(__file__))
-sample_path = os.path.join(script_dir, "data", "sample_2000.csv")
-df = pd.read_csv(sample_path)
+data_path = os.path.join(script_dir, "..", "phase1", "data", "Software_5.json")
 
-print(f"Loaded {len(df)} reviews from sample_2000.csv")
-print(f"Sentiment distribution:")
+records = []
+with open(data_path, "r", encoding="utf-8") as f:
+    for line in f:
+        line = line.strip()
+        if line:
+            records.append(json.loads(line))
+
+df = pd.DataFrame(records)
+print(f"Loaded {len(df)} reviews")
+
+# ---- emoji audit (raw data) ----
+raw_emojis = df["reviewText"].dropna().apply(lambda x: emoji.emoji_count(str(x))).sum()
+print(f"Total emojis in raw reviewText: {raw_emojis}")
+
+# ---- step 1: column selection ----
+# reviewText: the primary long-form opinion text written by the reviewer.
+#   This is the richest source of sentiment signal - reviewers express likes,
+#   dislikes, recommendations, and emotions in detail here.
+# summary: a short headline written by the reviewer that captures the
+#   overall sentiment concisely. Combining it with reviewText gives the
+#   lexicon models both explicit sentiment keywords (summary) and context
+#   (reviewText), improving coverage for short or missing review bodies.
+# overall: the numeric star rating - used exclusively for labeling, not as
+#   a model input feature.
+df = df[["overall", "reviewText", "summary"]].copy()
+print("Columns selected: overall, reviewText, summary")
+
+# ---- step 2: drop rows with missing text ----
+# A review with no reviewText and no summary provides no signal.
+before = len(df)
+df = df.dropna(subset=["reviewText"])
+print(f"Dropped {before - len(df)} rows with missing reviewText ({len(df)} remain)")
+
+# ---- step 3: drop duplicate reviewText ----
+# Exact duplicate review bodies skew model evaluation by repeating identical signal. Keeping only the first occurrence removes fabricated/copy-paste reviews.
+before = len(df)
+df = df.drop_duplicates(subset=["reviewText"])
+print(f"Dropped {before - len(df)} duplicate reviewText rows ({len(df)} remain)")
+
+
+# ---- step 4: sentiment labeling ----
+# Ratings 4-5 -> Positive, 3 -> Neutral, 1-2 -> Negative (per project spec)
+def label_sentiment(rating):
+    if rating >= 4:
+        return "positive"
+    elif rating == 3:
+        return "neutral"
+    else:
+        return "negative"
+
+
+df["sentiment"] = df["overall"].apply(label_sentiment)
+print("\nLabel distribution after deduplication:")
 print(df["sentiment"].value_counts().to_string())
 
-# ---- text cleaning for ML models ----
-# The following preprocessing steps prepare text for TF-IDF vectorization:
-# 1. Demojize emojis: Convert emoji characters to text descriptions so sentiment
-#    signal from emojis is captured as words (e.g., "thumbs_up" instead of losing the emoji)
-# 2. Lowercase: Reduces vocabulary size by treating "Good" and "good" as the same token,
-#    which is essential for sparse models to generalize better
-# 3. Remove URLs: URLs provide no sentiment signal and add noise to the vocabulary
-# 4. Remove HTML tags: Leftover HTML markup from web scraping is irrelevant to sentiment
-# 5. Remove non-ASCII: Removes special characters that don't contribute to meaning
-# 6. Collapse whitespace: Ensures clean tokenization
+# ---- step 5: outlier removal ----
+# IQR-based upper outlier removal: Reviews exceeding Q3 + 1.5*IQR (> 503 words, as found in exploration) are disproportionately long and can dominate lexicon score averaging. Removing them keeps the sample representative of typical user behaviour.
+df["review_len"] = df["reviewText"].apply(lambda x: len(str(x).split()))
+
+before = len(df)
+df = df[df["review_len"] > 0]
+print(f"\nDropped {before - len(df)} empty reviews (0 words)")
+
+q1 = df["review_len"].quantile(0.25)
+q3 = df["review_len"].quantile(0.75)
+upper_bound = q3 + 1.5 * (q3 - q1)
+before = len(df)
+df = df[df["review_len"] <= upper_bound]
+print(
+    f"Dropped {before - len(df)} reviews above upper IQR bound ({upper_bound:.0f} words)"
+)
+print(f"Reviews remaining: {len(df)}")
+print("\nLabel distribution after outlier removal:")
+print(df["sentiment"].value_counts().to_string())
+
+# ---- step 6: text cleaning ----
+df["summary"] = df["summary"].fillna("")
 
 
-def clean_text_ml(text):
+def clean_text(text):
     """
-    Text cleaning pipeline optimized for ML/TF-IDF models.
+    Full cleaning pipeline for TextBlob (combined_text).
+    - Demojizes emojis to plain words (e.g. 😊 -> 'smiling face') so TextBlob
+      can extract sentiment signal from them rather than silently losing them.
+    - Lowercases, removes URLs, HTML, non-ASCII, collapses whitespace.
     """
-    # Convert emojis to text descriptions
     text = emoji.demojize(str(text), delimiters=(" ", " "))
-    # Remove colon-style demoji artifacts (e.g., :smiling_face:)
     text = re.sub(r":([a-z_]+):", r"\1", text)
-    # Replace underscores from demoji token names with spaces
     text = text.replace("_", " ")
-    # Lowercase - reduces vocabulary, improves generalization
     text = text.lower()
-    # Remove URLs - no sentiment signal
     text = re.sub(r"http\S+|www\.\S+", " ", text)
-    # Remove HTML tags - noise from web scraping
     text = re.sub(r"<[^>]+>", " ", text)
-    # Remove non-ASCII characters
     text = text.encode("ascii", errors="ignore").decode()
-    # Collapse whitespace
     text = re.sub(r"\s+", " ", text).strip()
     return text
 
 
-print("\n" + "-" * 80)
-print("Preprocessing")
+def clean_for_vader(text):
+    """
+    Minimal cleaning pipeline for VADER (vader_text).
+    - Preserves original casing and punctuation (VADER uses ALL CAPS and !!!
+      as intensity boosters).
+    - Preserves raw UTF-8 emojis - VADER has a native emoji valence lexicon
+      so keeping emojis intact gives a stronger signal than demojizing to words.
+    - Only strips URLs, HTML tags, and collapses whitespace.
+    NOTE: The ASCII-encoding strip used in other functions is intentionally
+    OMITTED here so emojis pass through unchanged.
+    """
+    text = str(text)
+    text = re.sub(r"http\S+|www\.\S+", " ", text)
+    text = re.sub(r"<[^>]+>", " ", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
 
-# Apply cleaning to reviewText
-df["clean_text"] = df["reviewText"].apply(clean_text_ml)
 
-# Combine summary and reviewText for richer signal
-# Summary often contains key sentiment words (e.g., "Great product!", "Waste of money")
-df["summary"] = df["summary"].fillna("")
-df["clean_summary"] = df["summary"].apply(clean_text_ml)
-df["text_combined"] = df.apply(
+df["clean_text"] = df["reviewText"].apply(clean_text)
+df["clean_summary"] = df["summary"].apply(clean_text)
+df["combined_text"] = df.apply(
     lambda r: (r["clean_summary"] + " " + r["clean_text"]).strip(), axis=1
 )
 
-print(f"Applied text cleaning to {len(df)} reviews")
-print(f"\nSample cleaned text:")
-print(f"  Original : {df['reviewText'].iloc[0][:100]}...")
-print(f"  Cleaned  : {df['clean_text'].iloc[0][:100]}...")
-
-# ---- train/test split (70/30 stratified) ----
-# Stratified split ensures both train and test sets maintain the same class distribution,
-# which is critical for fair evaluation on imbalanced data.
-print("\n" + "-" * 80)
-print("Train/Test Split")
-
-X = df["text_combined"]
-y = df["sentiment"]
-
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.30, stratify=y, random_state=42
+df["vader_text"] = df.apply(
+    lambda r: (
+        clean_for_vader(str(r["summary"])) + " " + clean_for_vader(str(r["reviewText"]))
+    ).strip(),
+    axis=1,
 )
 
-print(f"Total samples : {len(df)}")
-print(f"Training set  : {len(X_train)} ({len(X_train) / len(df) * 100:.1f}%)")
-print(f"Test set      : {len(X_test)} ({len(X_test) / len(df) * 100:.1f}%)")
+# ML uses the same normalized text representation as TextBlob.
+df["ml_text"] = df["combined_text"]
 
-print(f"\nTraining set distribution:")
-print(y_train.value_counts().to_string())
-print(f"\nTest set distribution:")
-print(y_test.value_counts().to_string())
+print("\nSample cleaned review (combined_text):")
+print(df["combined_text"].iloc[0][:200])
+print("\nSample cleaned review (vader_text):")
+print(df["vader_text"].iloc[0][:200])
+print("\nSample cleaned review (ml_text):")
+print(df["ml_text"].iloc[0][:200])
 
-# ---- TF-IDF vectorization ----
-# TF-IDF (Term Frequency-Inverse Document Frequency) was chosen because:
-# 1. It captures term importance by downweighting common words (like "the", "is")
-# 2. It works well with linear classifiers (Logistic Regression, SVM)
-# 3. It produces sparse representations, which are memory-efficient
-# 4. Unlike raw counts, TF-IDF considers document frequency, making rare but
-#    meaningful terms (like "excellent", "terrible") stand out
+# ---- step 7: random stratified sample of 2000 reviews ----
+# Stratified sampling preserves the class distribution of the cleaned dataset so evaluation metrics fairly reflect real-world performance.
+TARGET = 2000
+fracs = df["sentiment"].value_counts(normalize=True)
+parts = []
+allocated = 0
+labels = fracs.index.tolist()
+for i, label in enumerate(labels):
+    if i < len(labels) - 1:
+        n = round(fracs[label] * TARGET)
+    else:
+        n = TARGET - allocated
+    group = df[df["sentiment"] == label]
+    parts.append(group.sample(n=min(n, len(group)), random_state=42))
+    allocated += min(n, len(group))
+sample_2000 = pd.concat(parts).sample(frac=1, random_state=42).reset_index(drop=True)
 
-print("\n" + "-" * 80)
-print("TF-IDF Vectorization")
+print("\nStratified 2000-review sample:")
+print(sample_2000["sentiment"].value_counts().to_string())
 
-# Parameters chosen:
-# - max_features=5000: Limits vocabulary to top 5000 terms to prevent overfitting
-# - ngram_range=(1,2): Includes unigrams and bigrams to capture phrases like "not good"
-# - min_df=2: Ignores terms appearing in fewer than 2 documents (typos, very rare words)
-# - max_df=0.95: Ignores terms appearing in >95% of documents (too common to be useful)
-# - sublinear_tf=True: Applies log scaling to term frequency, reducing impact of very frequent terms
+# ------------------------------------------------------------
+# VALIDATION BLOCK
+# ------------------------------------------------------------
+print("\n" + "=" * 80)
+print("VALIDATION BLOCK")
 
-tfidf = TfidfVectorizer(
-    max_features=5000, ngram_range=(1, 2), min_df=2, max_df=0.95, sublinear_tf=True
+# 1. Sample 5 rows side by side
+print(
+    "\n[1] Sample 5 rows (reviewText | vader_text | combined_text | ml_text | sentiment):"
+)
+sample_display = df[
+    ["reviewText", "vader_text", "combined_text", "ml_text", "sentiment"]
+].head(5)
+for i, row in sample_display.iterrows():
+    print(f"\n  Row {i}")
+    print(f"  reviewText    : {str(row['reviewText'])[:80]}")
+    print(f"  vader_text    : {str(row['vader_text'])[:80]}")
+    print(f"  combined_text : {str(row['combined_text'])[:80]}")
+    print(f"  ml_text       : {str(row['ml_text'])[:80]}")
+    print(f"  sentiment     : {row['sentiment']}")
+
+# 2. Sentiment column integrity
+print("\n[2] Sentiment column null check:")
+print(f"  Nulls in sentiment: {df['sentiment'].isnull().sum()}")
+print(f"  Unique values     : {df['sentiment'].unique().tolist()}")
+
+# 3. Cross-tab: overall rating vs sentiment label (catches float edge cases)
+print("\n[3] Cross-tab overall vs sentiment (should be clean 1-to-1 mapping):")
+print(pd.crosstab(df["overall"], df["sentiment"]).to_string())
+
+# 4. Casing check - vader_text should preserve original casing
+caps_in_vader = (
+    df["vader_text"].apply(lambda x: bool(re.search(r"[A-Z]", str(x)))).sum()
+)
+caps_in_combined = (
+    df["combined_text"].apply(lambda x: bool(re.search(r"[A-Z]", str(x)))).sum()
+)
+print(f"\n[4] Casing check:")
+print(f"  Rows with uppercase chars in vader_text    : {caps_in_vader} (should be > 0)")
+print(
+    f"  Rows with uppercase chars in combined_text : {caps_in_combined} (should be 0)"
 )
 
-# Fit on training data only to prevent data leakage
-X_train_tfidf = tfidf.fit_transform(X_train)
-X_test_tfidf = tfidf.transform(X_test)
+# 5. Leftover HTML / URL check
+html_in_vader = df["vader_text"].str.contains(r"<[^>]+>|http", regex=True).sum()
+html_in_combined = df["combined_text"].str.contains(r"<[^>]+>|http", regex=True).sum()
+html_in_ml = df["ml_text"].str.contains(r"<[^>]+>|http", regex=True).sum()
+print(f"\n[5] Leftover HTML/URL check:")
+print(f"  vader_text    : {html_in_vader} rows still contain HTML or URLs")
+print(f"  combined_text : {html_in_combined} rows still contain HTML or URLs")
+print(f"  ml_text       : {html_in_ml} rows still contain HTML or URLs")
 
-print(f"Vocabulary size: {len(tfidf.vocabulary_)}")
-print(f"Training matrix shape: {X_train_tfidf.shape}")
-print(f"Test matrix shape    : {X_test_tfidf.shape}")
-print(f"\nTop 20 features by index:")
-vocab_items = sorted(tfidf.vocabulary_.items(), key=lambda x: x[1])[:20]
-for word, idx in vocab_items:
-    print(f"  {idx}: {word}")
+# 6. Length stats post-emoji fix
+print(f"\n[6] Length stats (words) post-emoji fix:")
+df["vader_len"] = df["vader_text"].apply(lambda x: len(str(x).split()))
+df["combined_len"] = df["combined_text"].apply(lambda x: len(str(x).split()))
+df["ml_len"] = df["ml_text"].apply(lambda x: len(str(x).split()))
+for col in ["vader_len", "combined_len", "ml_len"]:
+    print(
+        f"  {col}: min={df[col].min()}, max={df[col].max()}, avg={df[col].mean():.2f}"
+    )
+
+print("=" * 80)
 
 # ---- save outputs ----
-print("\n" + "-" * 80)
-print("Saving Outputs")
+out_path = os.path.join(script_dir, "data", "preprocessed_phase2.csv")
+sample_path = os.path.join(script_dir, "data", "sample_2000_phase2.csv")
 
-data_dir = os.path.join(script_dir, "data")
+df.to_csv(out_path, index=False)
+sample_2000.to_csv(sample_path, index=False)
 
-# Save train/test splits with indices for reproducibility
-train_df = pd.DataFrame({"text": X_train.values, "sentiment": y_train.values})
-test_df = pd.DataFrame({"text": X_test.values, "sentiment": y_test.values})
-
-train_df.to_csv(os.path.join(data_dir, "train.csv"), index=False)
-test_df.to_csv(os.path.join(data_dir, "test.csv"), index=False)
-
-# Save TF-IDF vectorizer and matrices
-joblib.dump(tfidf, os.path.join(data_dir, "tfidf_vectorizer.pkl"))
-joblib.dump(X_train_tfidf, os.path.join(data_dir, "X_train_tfidf.pkl"))
-joblib.dump(X_test_tfidf, os.path.join(data_dir, "X_test_tfidf.pkl"))
-joblib.dump(y_train.values, os.path.join(data_dir, "y_train.pkl"))
-joblib.dump(y_test.values, os.path.join(data_dir, "y_test.pkl"))
-
-print(f"Saved train.csv        -> {len(train_df)} rows")
-print(f"Saved test.csv         -> {len(test_df)} rows")
-print(f"Saved tfidf_vectorizer.pkl")
-print(f"Saved X_train_tfidf.pkl, X_test_tfidf.pkl")
-print(f"Saved y_train.pkl, y_test.pkl")
-
-print("\n" + "-" * 80)
-print("Preprocessing complete.")
+print(f"\nSaved full preprocessed data  -> {out_path}")
+print(f"Saved 2000-review sample      -> {sample_path}")

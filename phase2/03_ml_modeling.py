@@ -1,40 +1,105 @@
 import os
+import warnings
 import joblib
 import numpy as np
+import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
 from sklearn.neural_network import MLPClassifier
-from sklearn.model_selection import GridSearchCV, cross_val_score
+from sklearn.model_selection import GridSearchCV, cross_val_score, train_test_split
 from sklearn.metrics import accuracy_score
 from lightgbm import LGBMClassifier
 
-# ---- load preprocessed data ----
+warnings.filterwarnings(
+    "ignore",
+    message="X does not have valid feature names, but LGBMClassifier was fitted with feature names",
+    category=UserWarning,
+)
+
+# ---- load preprocessed sample ----
 script_dir = os.path.dirname(os.path.abspath(__file__))
 data_dir = os.path.join(script_dir, "data")
 
-X_train = joblib.load(os.path.join(data_dir, "X_train_tfidf.pkl"))
-y_train = joblib.load(os.path.join(data_dir, "y_train.pkl"))
+sample_df = pd.read_csv(os.path.join(data_dir, "sample_2000_phase2.csv"))
+sample_df["ml_text"] = sample_df["ml_text"].fillna("")
 
-print(f"Loaded training data: {X_train.shape[0]} samples, {X_train.shape[1]} features")
-print(f"Class distribution in training set:")
+print(f"Loaded {len(sample_df)} reviews from sample_2000_phase2.csv")
+print("Class distribution in sample:")
+print(sample_df["sentiment"].value_counts().to_string())
+
+# ---- train/test split (70/30 stratified) ----
+# Stratified split ensures both train and test sets maintain the same class distribution,
+# which is critical for fair evaluation on imbalanced data.
+print("\n" + "-" * 80)
+print("Train/Test Split")
+
+train_df, test_df = train_test_split(
+    sample_df, test_size=0.30, stratify=sample_df["sentiment"], random_state=42
+)
+
+train_df = train_df.reset_index(drop=True)
+test_df = test_df.reset_index(drop=True)
+
+print(f"Total samples : {len(sample_df)}")
+print(f"Training set  : {len(train_df)} ({len(train_df) / len(sample_df) * 100:.1f}%)")
+print(f"Test set      : {len(test_df)} ({len(test_df) / len(sample_df) * 100:.1f}%)")
+
+print("\nTraining set distribution:")
+print(train_df["sentiment"].value_counts().to_string())
+print("\nTest set distribution:")
+print(test_df["sentiment"].value_counts().to_string())
+
+X_train = train_df["ml_text"]
+X_test = test_df["ml_text"]
+y_train = train_df["sentiment"]
+y_test = test_df["sentiment"]
+
+# ---- TF-IDF vectorization ----
+# TF-IDF (Term Frequency-Inverse Document Frequency) was chosen because:
+# 1. It captures term importance by downweighting common words (like "the", "is")
+# 2. It works well with linear classifiers (Logistic Regression, SVM)
+# 3. It produces sparse representations, which are memory-efficient
+# 4. Unlike raw counts, TF-IDF considers document frequency, making rare but
+#    meaningful terms (like "excellent", "terrible") stand out
+
+print("\n" + "-" * 80)
+print("TF-IDF Vectorization")
+
+# Parameters chosen:
+# - max_features=5000: Limits vocabulary to top 5000 terms to prevent overfitting
+# - ngram_range=(1,2): Includes unigrams and bigrams to capture phrases like "not good"
+# - min_df=2: Ignores terms appearing in fewer than 2 documents (typos, very rare words)
+# - max_df=0.95: Ignores terms appearing in >95% of documents (too common to be useful)
+# - sublinear_tf=True: Applies log scaling to term frequency, reducing impact of very frequent terms
+tfidf = TfidfVectorizer(
+    max_features=5000, ngram_range=(1, 2), min_df=2, max_df=0.95, sublinear_tf=True
+)
+
+# Fit on training data only to prevent data leakage
+X_train_tfidf = tfidf.fit_transform(X_train)
+X_test_tfidf = tfidf.transform(X_test)
+
+print(f"Vocabulary size: {len(tfidf.vocabulary_)}")
+print(f"Training matrix shape: {X_train_tfidf.shape}")
+print(f"Test matrix shape    : {X_test_tfidf.shape}")
+print("\nTop 20 features by index:")
+vocab_items = sorted(tfidf.vocabulary_.items(), key=lambda x: x[1])[:20]
+for word, idx in vocab_items:
+    print(f"  {idx}: {word}")
+
+print(
+    f"\nLoaded training data: {X_train.shape[0]} samples, {X_train_tfidf.shape[1]} features"
+)
+print("Class distribution in training set:")
 unique, counts = np.unique(y_train, return_counts=True)
 for label, count in zip(unique, counts):
     print(f"  {label}: {count}")
 
 # ---- Model 1: Logistic Regression ----
-# Logistic Regression is chosen because:
-# 1. It works well with high-dimensional sparse TF-IDF features
-# 2. It provides probability estimates for each class
-# 3. It is fast to train and interpretable
-# 4. L2 regularization prevents overfitting on sparse text data
-
 print("\n" + "-" * 80)
 print("Model 1: Logistic Regression")
 
-# Hyperparameter tuning using GridSearchCV with 5-fold cross-validation
-# - C: Inverse regularization strength (smaller = stronger regularization)
-# - solver: Algorithm for optimization (lbfgs works well for multiclass)
-# - max_iter: Increased to ensure convergence with sparse data
 lr_param_grid = {"C": [0.1, 1.0, 10.0], "solver": ["lbfgs"], "max_iter": [500]}
 
 lr = LogisticRegression(random_state=42)
@@ -43,35 +108,26 @@ lr_grid = GridSearchCV(
 )
 
 print("Running GridSearchCV for Logistic Regression...")
-lr_grid.fit(X_train, y_train)
+lr_grid.fit(X_train_tfidf, y_train)
 
 print(f"\nBest parameters: {lr_grid.best_params_}")
 print(f"Best cross-validation accuracy: {lr_grid.best_score_:.4f}")
 
-# Cross-validation scores for best model
 lr_best = lr_grid.best_estimator_
-lr_cv_scores = cross_val_score(lr_best, X_train, y_train, cv=5, scoring="accuracy")
+lr_cv_scores = cross_val_score(
+    lr_best, X_train_tfidf, y_train, cv=5, scoring="accuracy"
+)
 print(f"\nCross-validation scores (5-fold): {lr_cv_scores}")
 print(f"Mean CV accuracy: {lr_cv_scores.mean():.4f} (+/- {lr_cv_scores.std() * 2:.4f})")
 
-# Training accuracy
-lr_train_pred = lr_best.predict(X_train)
+lr_train_pred = lr_best.predict(X_train_tfidf)
 lr_train_acc = accuracy_score(y_train, lr_train_pred)
 print(f"Training accuracy: {lr_train_acc:.4f}")
 
 # ---- Model 2: Support Vector Machine (SVM) ----
-# SVM is chosen because:
-# 1. It excels at high-dimensional classification problems like text
-# 2. Linear kernel is effective for TF-IDF representations (linearly separable in high dimensions)
-# 3. Maximum margin principle provides good generalization
-# 4. Robust to overfitting, especially with proper regularization
-
 print("\n" + "-" * 80)
 print("Model 2: Support Vector Machine (SVM)")
 
-# Hyperparameter tuning using GridSearchCV
-# - C: Regularization parameter (trade-off between margin width and misclassification)
-# - kernel: Linear kernel is standard for text classification (efficient, effective)
 svm_param_grid = {"C": [0.1, 1.0, 10.0], "kernel": ["linear"]}
 
 svm = SVC(random_state=42)
@@ -80,40 +136,28 @@ svm_grid = GridSearchCV(
 )
 
 print("Running GridSearchCV for SVM...")
-svm_grid.fit(X_train, y_train)
+svm_grid.fit(X_train_tfidf, y_train)
 
 print(f"\nBest parameters: {svm_grid.best_params_}")
 print(f"Best cross-validation accuracy: {svm_grid.best_score_:.4f}")
 
-# Cross-validation scores for best model
 svm_best = svm_grid.best_estimator_
-svm_cv_scores = cross_val_score(svm_best, X_train, y_train, cv=5, scoring="accuracy")
+svm_cv_scores = cross_val_score(
+    svm_best, X_train_tfidf, y_train, cv=5, scoring="accuracy"
+)
 print(f"\nCross-validation scores (5-fold): {svm_cv_scores}")
 print(
     f"Mean CV accuracy: {svm_cv_scores.mean():.4f} (+/- {svm_cv_scores.std() * 2:.4f})"
 )
 
-# Training accuracy
-svm_train_pred = svm_best.predict(X_train)
+svm_train_pred = svm_best.predict(X_train_tfidf)
 svm_train_acc = accuracy_score(y_train, svm_train_pred)
 print(f"Training accuracy: {svm_train_acc:.4f}")
 
 # ---- Model 3: LightGBM (Gradient Boosting) ----
-# LightGBM is chosen because:
-# 1. It is a highly efficient gradient boosting framework optimized for speed
-# 2. It handles sparse data (TF-IDF) efficiently with histogram-based algorithms
-# 3. It captures non-linear relationships and feature interactions that linear models miss
-# 4. Built-in regularization (num_leaves, min_child_samples) prevents overfitting
-# 5. Often achieves state-of-the-art results on tabular/structured data
-
 print("\n" + "-" * 80)
 print("Model 3: LightGBM (Gradient Boosting)")
 
-# Hyperparameter tuning using GridSearchCV
-# - n_estimators: Number of boosting rounds (trees)
-# - learning_rate: Step size shrinkage to prevent overfitting
-# - num_leaves: Max number of leaves per tree (controls complexity)
-# - max_depth: Maximum tree depth (-1 means no limit)
 lgbm_param_grid = {
     "n_estimators": [100, 200],
     "learning_rate": [0.05, 0.1],
@@ -127,29 +171,27 @@ lgbm_grid = GridSearchCV(
 )
 
 print("Running GridSearchCV for LightGBM...")
-lgbm_grid.fit(X_train, y_train)
+lgbm_grid.fit(X_train_tfidf, y_train)
 
 print(f"\nBest parameters: {lgbm_grid.best_params_}")
 print(f"Best cross-validation accuracy: {lgbm_grid.best_score_:.4f}")
 
-# Cross-validation scores for best model
 lgbm_best = lgbm_grid.best_estimator_
-lgbm_cv_scores = cross_val_score(lgbm_best, X_train, y_train, cv=5, scoring="accuracy")
+lgbm_cv_scores = cross_val_score(
+    lgbm_best, X_train_tfidf, y_train, cv=5, scoring="accuracy"
+)
 print(f"\nCross-validation scores (5-fold): {lgbm_cv_scores}")
 print(
     f"Mean CV accuracy: {lgbm_cv_scores.mean():.4f} (+/- {lgbm_cv_scores.std() * 2:.4f})"
 )
 
-# Training accuracy
-lgbm_train_pred = lgbm_best.predict(X_train)
+lgbm_train_pred = lgbm_best.predict(X_train_tfidf)
 lgbm_train_acc = accuracy_score(y_train, lgbm_train_pred)
 print(f"Training accuracy: {lgbm_train_acc:.4f}")
 
-# Feature importance analysis (top 20 features)
 print("\nTop 20 most important features (by gain):")
 feature_importance = lgbm_best.feature_importances_
-tfidf_vectorizer = joblib.load(os.path.join(data_dir, "tfidf_vectorizer.pkl"))
-feature_names = tfidf_vectorizer.get_feature_names_out()
+feature_names = tfidf.get_feature_names_out()
 importance_df = sorted(
     zip(feature_names, feature_importance), key=lambda x: x[1], reverse=True
 )[:20]
@@ -157,22 +199,9 @@ for i, (feat, imp) in enumerate(importance_df, 1):
     print(f"  {i:2d}. {feat:<25} {imp:.4f}")
 
 # ---- Model 4: MLP (Multi-Layer Perceptron) ----
-# MLP is chosen because:
-# 1. Neural networks can learn complex non-linear decision boundaries
-# 2. Multiple hidden layers enable hierarchical feature learning
-# 3. Works well with normalized/scaled features (TF-IDF is already normalized)
-# 4. Can capture semantic relationships between words through learned embeddings
-# 5. Provides a bridge between traditional ML and deep learning approaches
-
 print("\n" + "-" * 80)
 print("Model 4: MLP (Multi-Layer Perceptron)")
 
-# Hyperparameter tuning using GridSearchCV
-# - hidden_layer_sizes: Architecture of hidden layers (neurons per layer)
-# - activation: Non-linear activation function
-# - alpha: L2 regularization strength to prevent overfitting
-# - learning_rate_init: Initial learning rate for weight updates
-# - max_iter: Maximum epochs for training
 mlp_param_grid = {
     "hidden_layer_sizes": [(100,), (100, 50), (128, 64)],
     "activation": ["relu"],
@@ -187,27 +216,26 @@ mlp_grid = GridSearchCV(
 )
 
 print("Running GridSearchCV for MLP...")
-mlp_grid.fit(X_train, y_train)
+mlp_grid.fit(X_train_tfidf, y_train)
 
 print(f"\nBest parameters: {mlp_grid.best_params_}")
 print(f"Best cross-validation accuracy: {mlp_grid.best_score_:.4f}")
 
-# Cross-validation scores for best model
 mlp_best = mlp_grid.best_estimator_
-mlp_cv_scores = cross_val_score(mlp_best, X_train, y_train, cv=5, scoring="accuracy")
+mlp_cv_scores = cross_val_score(
+    mlp_best, X_train_tfidf, y_train, cv=5, scoring="accuracy"
+)
 print(f"\nCross-validation scores (5-fold): {mlp_cv_scores}")
 print(
     f"Mean CV accuracy: {mlp_cv_scores.mean():.4f} (+/- {mlp_cv_scores.std() * 2:.4f})"
 )
 
-# Training accuracy
-mlp_train_pred = mlp_best.predict(X_train)
+mlp_train_pred = mlp_best.predict(X_train_tfidf)
 mlp_train_acc = accuracy_score(y_train, mlp_train_pred)
 print(f"Training accuracy: {mlp_train_acc:.4f}")
 
-# MLP architecture analysis
-print(f"\nMLP Architecture:")
-print(f"  Input layer   : {X_train.shape[1]} features")
+print("\nMLP Architecture:")
+print(f"  Input layer   : {X_train_tfidf.shape[1]} features")
 for i, layer_size in enumerate(mlp_best.hidden_layer_sizes):
     if isinstance(mlp_best.hidden_layer_sizes, tuple):
         print(f"  Hidden layer {i + 1}: {layer_size} neurons")
@@ -228,7 +256,6 @@ print(f"{'SVM (Linear)':<25} {svm_grid.best_score_:<20.4f} {svm_train_acc:<20.4f
 print(f"{'LightGBM':<25} {lgbm_grid.best_score_:<20.4f} {lgbm_train_acc:<20.4f}")
 print(f"{'MLP':<25} {mlp_grid.best_score_:<20.4f} {mlp_train_acc:<20.4f}")
 
-# Analyze overfitting by comparing training vs CV accuracy
 print("\n" + "-" * 80)
 print("Overfitting Analysis (Training Accuracy - CV Accuracy)")
 print(f"\n{'Model':<25} {'Difference':<15} {'Assessment':<30}")
@@ -250,16 +277,24 @@ for name, train_acc, cv_acc in [
         assessment = "Significant overfitting"
     print(f"{name:<25} {diff:<15.4f} {assessment:<30}")
 
-# ---- save models ----
+# ---- save outputs ----
 print("\n" + "-" * 80)
-print("Saving Models")
+print("Saving Outputs")
+
+train_df.to_csv(os.path.join(data_dir, "train.csv"), index=False)
+test_df.to_csv(os.path.join(data_dir, "test.csv"), index=False)
+
+joblib.dump(tfidf, os.path.join(data_dir, "tfidf_vectorizer.pkl"))
+joblib.dump(X_train_tfidf, os.path.join(data_dir, "X_train_tfidf.pkl"))
+joblib.dump(X_test_tfidf, os.path.join(data_dir, "X_test_tfidf.pkl"))
+joblib.dump(y_train.values, os.path.join(data_dir, "y_train.pkl"))
+joblib.dump(y_test.values, os.path.join(data_dir, "y_test.pkl"))
 
 joblib.dump(lr_best, os.path.join(data_dir, "logistic_regression.pkl"))
 joblib.dump(svm_best, os.path.join(data_dir, "svm.pkl"))
 joblib.dump(lgbm_best, os.path.join(data_dir, "lightgbm.pkl"))
 joblib.dump(mlp_best, os.path.join(data_dir, "mlp.pkl"))
 
-# Save training results for report
 training_results = {
     "logistic_regression": {
         "best_params": lr_grid.best_params_,
@@ -298,11 +333,16 @@ training_results = {
 }
 joblib.dump(training_results, os.path.join(data_dir, "training_results.pkl"))
 
-print(f"Saved logistic_regression.pkl")
-print(f"Saved svm.pkl")
-print(f"Saved lightgbm.pkl")
-print(f"Saved mlp.pkl")
-print(f"Saved training_results.pkl")
+print(f"Saved train.csv        -> {len(train_df)} rows")
+print(f"Saved test.csv         -> {len(test_df)} rows")
+print("Saved tfidf_vectorizer.pkl")
+print("Saved X_train_tfidf.pkl, X_test_tfidf.pkl")
+print("Saved y_train.pkl, y_test.pkl")
+print("Saved logistic_regression.pkl")
+print("Saved svm.pkl")
+print("Saved lightgbm.pkl")
+print("Saved mlp.pkl")
+print("Saved training_results.pkl")
 
 print("\n" + "-" * 80)
 print("Model training complete.")
