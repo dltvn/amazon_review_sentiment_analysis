@@ -27,6 +27,39 @@ warnings.filterwarnings(
 script_dir = os.path.dirname(os.path.abspath(__file__))
 data_dir = os.path.join(script_dir, "data")
 plots_dir = os.path.join(script_dir, "plots")
+os.makedirs(plots_dir, exist_ok=True)
+
+evaluation_plot_files = [
+    "05_lr_confusion_matrix.png",
+    "06_svm_confusion_matrix.png",
+    "07_lgbm_confusion_matrix.png",
+    "07_vader_confusion_matrix.png",
+    "08_mlp_confusion_matrix.png",
+    "08_textblob_confusion_matrix.png",
+    "09_lr_confusion_matrix.png",
+    "09_model_comparison.png",
+    "09_vader_confusion_matrix.png",
+    "10_ml_vs_lexicon.png",
+    "10_svm_confusion_matrix.png",
+    "10_textblob_confusion_matrix.png",
+    "11_lgbm_confusion_matrix.png",
+    "11_model_comparison.png",
+    "12_ml_vs_lexicon.png",
+    "12_mlp_confusion_matrix.png",
+    "13_ml_models_comparison.png",
+    "13_vader_confusion_matrix.png",
+    "14_per_class_f1.png",
+    "14_textblob_confusion_matrix.png",
+    "15_model_comparison.png",
+    "16_ml_vs_lexicon.png",
+    "17_ml_models_comparison.png",
+    "18_per_class_f1.png",
+]
+
+for filename in evaluation_plot_files:
+    file_path = os.path.join(plots_dir, filename)
+    if os.path.exists(file_path):
+        os.remove(file_path)
 
 X_test_tfidf = joblib.load(os.path.join(data_dir, "X_test_tfidf.pkl"))
 y_test = joblib.load(os.path.join(data_dir, "y_test.pkl"))
@@ -153,9 +186,28 @@ print(comparison.to_string(float_format=lambda x: f"{x:.4f}"))
 print("\n" + "-" * 80)
 print("Generating Confusion Matrices")
 
+confusion_matrix_rows = []
+
 
 def plot_confusion_matrix(y_true, y_pred, title, filename):
     cm = confusion_matrix(y_true, y_pred, labels=label_order)
+    cm_df = pd.DataFrame(cm, index=label_order, columns=label_order)
+    print(f"\n{title}")
+    print(cm_df.to_string())
+
+    for actual_label in label_order:
+        for predicted_label in label_order:
+            confusion_matrix_rows.append(
+                {
+                    "model": title.replace(" Confusion Matrix", "").replace(
+                        " (Test Set)", ""
+                    ),
+                    "actual": actual_label,
+                    "predicted": predicted_label,
+                    "count": cm_df.loc[actual_label, predicted_label],
+                }
+            )
+
     fig, ax = plt.subplots(figsize=(6, 5))
     sns.heatmap(
         cm,
@@ -170,8 +222,8 @@ def plot_confusion_matrix(y_true, y_pred, title, filename):
     ax.set_xlabel("Predicted")
     ax.set_ylabel("Actual")
     plt.tight_layout()
-    plt.savefig(os.path.join(plots_dir, filename), dpi=120)
-    plt.close()
+    fig.savefig(os.path.join(plots_dir, filename), dpi=120)
+    plt.close(fig)
     print(f"Saved: {filename}")
 
 
@@ -257,8 +309,8 @@ ax.set_ylim(0, 1)
 ax.set_xticklabels(ax.get_xticklabels(), rotation=0)
 ax.legend(loc="lower right", fontsize=8)
 plt.tight_layout()
-plt.savefig(os.path.join(plots_dir, "15_model_comparison.png"), dpi=120)
-plt.close()
+fig.savefig(os.path.join(plots_dir, "15_model_comparison.png"), dpi=120)
+plt.close(fig)
 print("Saved: 15_model_comparison.png")
 
 fig, axes = plt.subplots(1, 2, figsize=(16, 5))
@@ -285,8 +337,8 @@ axes[1].set_xticklabels(axes[1].get_xticklabels(), rotation=0)
 axes[1].legend(loc="lower right")
 
 plt.tight_layout()
-plt.savefig(os.path.join(plots_dir, "16_ml_vs_lexicon.png"), dpi=120)
-plt.close()
+fig.savefig(os.path.join(plots_dir, "16_ml_vs_lexicon.png"), dpi=120)
+plt.close(fig)
 print("Saved: 16_ml_vs_lexicon.png")
 
 fig, ax = plt.subplots(figsize=(12, 6))
@@ -302,8 +354,8 @@ for container in ax.containers:
     ax.bar_label(container, fmt="%.2f", fontsize=7, rotation=90, padding=3)
 
 plt.tight_layout()
-plt.savefig(os.path.join(plots_dir, "17_ml_models_comparison.png"), dpi=120)
-plt.close()
+fig.savefig(os.path.join(plots_dir, "17_ml_models_comparison.png"), dpi=120)
+plt.close(fig)
 print("Saved: 17_ml_models_comparison.png")
 
 # ---- Per-class performance analysis ----
@@ -344,8 +396,8 @@ ax.set_ylim(0, 1)
 ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha="right")
 ax.legend(loc="lower right")
 plt.tight_layout()
-plt.savefig(os.path.join(plots_dir, "18_per_class_f1.png"), dpi=120)
-plt.close()
+fig.savefig(os.path.join(plots_dir, "18_per_class_f1.png"), dpi=120)
+plt.close(fig)
 print("Saved: 18_per_class_f1.png")
 
 # ---- save results ----
@@ -357,6 +409,12 @@ print("Saved: model_comparison.csv")
 
 per_class_df.to_csv(os.path.join(data_dir, "per_class_metrics.csv"))
 print("Saved: per_class_metrics.csv")
+
+confusion_matrix_df = pd.DataFrame(confusion_matrix_rows)
+confusion_matrix_df.to_csv(
+    os.path.join(data_dir, "confusion_matrices.csv"), index=False
+)
+print("Saved: confusion_matrices.csv")
 
 test_df["lr_pred"] = lr_pred
 test_df["svm_pred"] = svm_pred

@@ -1,0 +1,55 @@
+model,actual,predicted,count
+Logistic Regression,positive,positive,2006
+Logistic Regression,positive,neutral,8
+Logistic Regression,positive,negative,37
+Logistic Regression,neutral,positive,296
+Logistic Regression,neutral,neutral,42
+Logistic Regression,neutral,negative,50
+Logistic Regression,negative,positive,218
+Logistic Regression,negative,neutral,11
+Logistic Regression,negative,negative,300
+SVM,positive,positive,1933
+SVM,positive,neutral,55
+SVM,positive,negative,63
+SVM,neutral,positive,216
+SVM,neutral,neutral,89
+SVM,neutral,negative,83
+SVM,negative,positive,133
+SVM,negative,neutral,47
+SVM,negative,negative,349
+LightGBM,positive,positive,2003
+LightGBM,positive,neutral,21
+LightGBM,positive,negative,27
+LightGBM,neutral,positive,291
+LightGBM,neutral,neutral,49
+LightGBM,neutral,negative,48
+LightGBM,negative,positive,224
+LightGBM,negative,neutral,27
+LightGBM,negative,negative,278
+MLP,positive,positive,1801
+MLP,positive,neutral,147
+MLP,positive,negative,103
+MLP,neutral,positive,169
+MLP,neutral,neutral,135
+MLP,neutral,negative,84
+MLP,negative,positive,107
+MLP,negative,neutral,84
+MLP,negative,negative,338
+VADER,positive,positive,1908
+VADER,positive,neutral,71
+VADER,positive,negative,72
+VADER,neutral,positive,300
+VADER,neutral,neutral,25
+VADER,neutral,negative,63
+VADER,negative,positive,262
+VADER,negative,neutral,30
+VADER,negative,negative,237
+TextBlob,positive,positive,1861
+TextBlob,positive,neutral,142
+TextBlob,positive,negative,48
+TextBlob,neutral,positive,316
+TextBlob,neutral,neutral,60
+TextBlob,neutral,negative,12
+TextBlob,negative,positive,249
+TextBlob,negative,neutral,153
+TextBlob,negative,negative,127

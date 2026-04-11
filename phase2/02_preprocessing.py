@@ -146,25 +146,33 @@ print(df["vader_text"].iloc[0][:200])
 print("\nSample cleaned review (ml_text):")
 print(df["ml_text"].iloc[0][:200])
 
-# ---- step 7: random stratified sample of 2000 reviews ----
+# ---- step 7: random stratified sample of up to 20000 reviews ----
 # Stratified sampling preserves the class distribution of the cleaned dataset so evaluation metrics fairly reflect real-world performance.
-TARGET = 2000
+TARGET_SAMPLE_SIZE = 20000
+actual_sample_size = min(TARGET_SAMPLE_SIZE, len(df))
+
+if actual_sample_size < TARGET_SAMPLE_SIZE:
+    print(
+        f"\nRequested sample size: {TARGET_SAMPLE_SIZE}, but only {len(df)} cleaned reviews are available."
+    )
+    print(f"Using all available cleaned reviews: {actual_sample_size}")
+
 fracs = df["sentiment"].value_counts(normalize=True)
 parts = []
 allocated = 0
 labels = fracs.index.tolist()
 for i, label in enumerate(labels):
     if i < len(labels) - 1:
-        n = round(fracs[label] * TARGET)
+        n = round(fracs[label] * actual_sample_size)
     else:
-        n = TARGET - allocated
+        n = actual_sample_size - allocated
     group = df[df["sentiment"] == label]
     parts.append(group.sample(n=min(n, len(group)), random_state=42))
     allocated += min(n, len(group))
-sample_2000 = pd.concat(parts).sample(frac=1, random_state=42).reset_index(drop=True)
+sample_df = pd.concat(parts).sample(frac=1, random_state=42).reset_index(drop=True)
 
-print("\nStratified 2000-review sample:")
-print(sample_2000["sentiment"].value_counts().to_string())
+print(f"\nStratified sample ({len(sample_df)} reviews):")
+print(sample_df["sentiment"].value_counts().to_string())
 
 # ------------------------------------------------------------
 # VALIDATION BLOCK
@@ -232,10 +240,14 @@ print("=" * 80)
 
 # ---- save outputs ----
 out_path = os.path.join(script_dir, "data", "preprocessed_phase2.csv")
-sample_path = os.path.join(script_dir, "data", "sample_2000_phase2.csv")
+sample_path = os.path.join(script_dir, "data", "sample_phase2.csv")
+legacy_sample_path = os.path.join(script_dir, "data", "sample_2000_phase2.csv")
+
+if os.path.exists(legacy_sample_path):
+    os.remove(legacy_sample_path)
 
 df.to_csv(out_path, index=False)
-sample_2000.to_csv(sample_path, index=False)
+sample_df.to_csv(sample_path, index=False)
 
 print(f"\nSaved full preprocessed data  -> {out_path}")
-print(f"Saved 2000-review sample      -> {sample_path}")
+print(f"Saved stratified sample       -> {sample_path}")

@@ -1,0 +1,5 @@
+model,best_cv_accuracy,training_accuracy,overfitting_gap,best_params
+Logistic Regression,0.7817416763638758,0.8338870431893688,0.05214536682549298,"{'C': 0.5, 'class_weight': None, 'max_iter': 500, 'solver': 'lbfgs'}"
+SVM,0.8058637502670019,0.9248880543117146,0.11902430404471276,"{'C': 0.5, 'class_weight': None}"
+LightGBM,0.7750959892242658,0.8740430449227213,0.09894705569845552,"{'colsample_bytree': 0.8, 'learning_rate': 0.05, 'max_depth': 8, 'min_child_samples': 20, 'n_estimators': 120, 'num_leaves': 15, 'reg_lambda': 0.5, 'subsample': 0.8}"
+MLP,0.7717753367604736,1.0,0.2282246632395264,"{'activation': 'relu', 'alpha': 0.01, 'hidden_layer_sizes': (64, 32), 'learning_rate_init': 0.001, 'max_iter': 300}"
