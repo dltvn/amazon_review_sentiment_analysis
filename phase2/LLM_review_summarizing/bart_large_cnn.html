@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jupyter Notebook — generated with runcell</title>
+    <meta name="description" content="Exported with runcell — convert .ipynb notebooks to HTML or PDF anytime at runcell.dev." />
+    <meta name="generator" content="runcell" />
+    <style>
+        :root {
+            --jp-code-font-family: 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace;
+            --jp-content-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            --jp-cell-prompt-width: 64px;
+            --jp-input-prompt-color: #307fc1;
+            --jp-output-prompt-color: #bf5b3d;
+            --jp-cell-input-bg: #f7f7f7;
+            --jp-layout-color0: #ffffff;
+            --jp-layout-color1: #f7f7f7;
+            --jp-border-color1: #e0e0e0;
+            --jp-content-font-color0: #000000;
+            --jp-content-font-color1: #333333;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--jp-content-font-family);
+            font-size: 14px;
+            line-height: 1.5;
+            color: var(--jp-content-font-color0);
+            background-color: var(--jp-layout-color0);
+            margin: 0;
+            padding: 0;
+        }
+
+        .notebook-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Cell structure */
+        .cell {
+            display: flex;
+            flex-direction: row;
+            margin-bottom: 12px;
+            position: relative;
+        }
+
+        .cell-prompt {
+            min-width: var(--jp-cell-prompt-width);
+            width: var(--jp-cell-prompt-width);
+            font-family: var(--jp-code-font-family);
+            font-size: 12px;
+            padding: 10px 8px 10px 0;
+            text-align: right;
+            flex-shrink: 0;
+            user-select: none;
+        }
+
+        .cell-content {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        /* Input prompt styling - Jupyter blue */
+        .input-prompt {
+            color: var(--jp-input-prompt-color);
+            font-weight: bold;
+        }
+
+        /* Output prompt styling - Jupyter red/orange */
+        .output-prompt {
+            color: var(--jp-output-prompt-color);
+            font-weight: bold;
+        }
+
+        /* Code cell input area */
+        .input-area {
+            background-color: var(--jp-cell-input-bg);
+            border: 1px solid var(--jp-border-color1);
+            border-radius: 2px;
+            padding: 8px 12px;
+            overflow-x: auto;
+        }
+
+        .input-area pre {
+            margin: 0;
+            font-family: var(--jp-code-font-family);
+            font-size: 13px;
+            line-height: 1.4;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        /* Output area */
+        .output-area {
+            margin-top: 0;
+        }
+
+        .output-wrapper {
+            display: flex;
+            flex-direction: row;
+            margin-top: 4px;
+        }
+
+        .output-content {
+            flex: 1;
+            min-width: 0;
+            padding: 8px 0;
+        }
+
+        .output-content pre {
+            margin: 0;
+            font-family: var(--jp-code-font-family);
+            font-size: 13px;
+            line-height: 1.4;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        /* Stream output (stdout/stderr) */
+        .output-stream {
+            font-family: var(--jp-code-font-family);
+            font-size: 13px;
+            line-height: 1.4;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .output-stderr {
+            background-color: #fdd;
+            padding: 8px 12px;
+            border-radius: 2px;
+        }
+
+        /* Execute result / display data */
+        .output-result {
+            padding: 4px 0;
+        }
+
+        .output-result pre {
+            margin: 0;
+            font-family: var(--jp-code-font-family);
+            font-size: 13px;
+        }
+
+        /* Image output */
+        .output-image {
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* HTML output (DataFrames, etc.) */
+        .output-html {
+            overflow-x: auto;
+        }
+
+        .output-html table {
+            border-collapse: collapse;
+            font-size: 13px;
+            font-family: var(--jp-content-font-family);
+        }
+
+        .output-html table th,
+        .output-html table td {
+            border: 1px solid #ddd;
+            padding: 6px 10px;
+            text-align: left;
+        }
+
+        .output-html table th {
+            background-color: #f5f5f5;
+            font-weight: 600;
+        }
+
+        .output-html table tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+
+        /* Error output */
+        .output-error {
+            background-color: #fff0f0;
+            padding: 8px 12px;
+            border-radius: 2px;
+            font-family: var(--jp-code-font-family);
+            font-size: 13px;
+            white-space: pre-wrap;
+        }
+
+        /* Markdown cell styling */
+        .markdown-cell {
+            padding: 10px 0;
+        }
+
+        .markdown-cell h1 {
+            font-size: 2em;
+            font-weight: 600;
+            margin: 0.67em 0;
+            padding-bottom: 0.3em;
+            border-bottom: 1px solid var(--jp-border-color1);
+        }
+
+        .markdown-cell h2 {
+            font-size: 1.5em;
+            font-weight: 600;
+            margin: 0.83em 0;
+            padding-bottom: 0.3em;
+            border-bottom: 1px solid var(--jp-border-color1);
+        }
+
+        .markdown-cell h3 {
+            font-size: 1.25em;
+            font-weight: 600;
+            margin: 1em 0;
+        }
+
+        .markdown-cell h4 {
+            font-size: 1em;
+            font-weight: 600;
+            margin: 1.33em 0;
+        }
+
+        .markdown-cell h5 {
+            font-size: 0.875em;
+            font-weight: 600;
+            margin: 1.67em 0;
+        }
+
+        .markdown-cell h6 {
+            font-size: 0.85em;
+            font-weight: 600;
+            margin: 2.33em 0;
+            color: #6a737d;
+        }
+
+        .markdown-cell p {
+            margin: 0 0 16px 0;
+            line-height: 1.6;
+        }
+
+        .markdown-cell code {
+            font-family: var(--jp-code-font-family);
+            font-size: 85%;
+            background-color: rgba(27, 31, 35, 0.05);
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+        }
+
+        .markdown-cell pre {
+            background-color: var(--jp-cell-input-bg);
+            border: 1px solid var(--jp-border-color1);
+            border-radius: 3px;
+            padding: 16px;
+            overflow-x: auto;
+            font-size: 85%;
+            line-height: 1.45;
+        }
+
+        .markdown-cell pre code {
+            background-color: transparent;
+            padding: 0;
+            border-radius: 0;
+            font-size: 100%;
+        }
+
+        .markdown-cell blockquote {
+            margin: 0 0 16px 0;
+            padding: 0 1em;
+            color: #6a737d;
+            border-left: 4px solid #dfe2e5;
+        }
+
+        .markdown-cell ul,
+        .markdown-cell ol {
+            margin: 0 0 16px 0;
+            padding-left: 2em;
+        }
+
+        .markdown-cell li {
+            margin: 0.25em 0;
+        }
+
+        .markdown-cell a {
+            color: #0366d6;
+            text-decoration: none;
+        }
+
+        .markdown-cell a:hover {
+            text-decoration: underline;
+        }
+
+        .markdown-cell hr {
+            border: 0;
+            border-top: 1px solid var(--jp-border-color1);
+            margin: 24px 0;
+        }
+
+        .markdown-cell img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .markdown-cell table {
+            border-collapse: collapse;
+            margin: 0 0 16px 0;
+        }
+
+        .markdown-cell table th,
+        .markdown-cell table td {
+            border: 1px solid #dfe2e5;
+            padding: 6px 13px;
+        }
+
+        .markdown-cell table th {
+            font-weight: 600;
+            background-color: #f6f8fa;
+        }
+
+        .markdown-cell table tr:nth-child(2n) {
+            background-color: #f6f8fa;
+        }
+
+        /* Raw cell styling */
+        .raw-cell {
+            background-color: var(--jp-layout-color1);
+            border: 1px solid var(--jp-border-color1);
+            border-radius: 2px;
+            padding: 8px 12px;
+            font-family: var(--jp-code-font-family);
+            font-size: 13px;
+            white-space: pre-wrap;
+        }
+
+        /* Empty prompt placeholder */
+        .prompt-empty {
+            color: transparent;
+        }
+
+        .export-footer {
+            margin-top: 32px;
+            padding-top: 16px;
+            border-top: 1px solid var(--jp-border-color1);
+            color: #555;
+            font-size: 13px;
+            text-align: center;
+        }
+
+        .export-footer a {
+            color: #0366d6;
+            text-decoration: none;
+        }
+
+        .export-footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="notebook-container">
+        <div class="cell cell-code">
+            <div class="cell-prompt input-prompt">In [1]:</div>
+            <div class="cell-content">
+                <div class="input-area"><pre>!pip install -U transformers</pre></div>
+                <div class="output-area">
+                    <div class="output-wrapper">
+                        <div class="cell-prompt output-prompt"></div>
+                        <div class="output-content">
+                            <div class="output-stream">Requirement already satisfied: transformers in /usr/local/lib/python3.12/dist-packages (5.0.0)
+Collecting transformers
+  Downloading transformers-5.5.4-py3-none-any.whl.metadata (32 kB)
+Requirement already satisfied: huggingface-hub&lt;2.0,&gt;=1.5.0 in /usr/local/lib/python3.12/dist-packages (from transformers) (1.10.1)
+Requirement already satisfied: numpy&gt;=1.17 in /usr/local/lib/python3.12/dist-packages (from transformers) (2.0.2)
+Requirement already satisfied: packaging&gt;=20.0 in /usr/local/lib/python3.12/dist-packages (from transformers) (26.0)
+Requirement already satisfied: pyyaml&gt;=5.1 in /usr/local/lib/python3.12/dist-packages (from transformers) (6.0.3)
+Requirement already satisfied: regex&gt;=2025.10.22 in /usr/local/lib/python3.12/dist-packages (from transformers) (2025.11.3)
+Requirement already satisfied: tokenizers&lt;=0.23.0,&gt;=0.22.0 in /usr/local/lib/python3.12/dist-packages (from transformers) (0.22.2)
+Requirement already satisfied: typer in /usr/local/lib/python3.12/dist-packages (from transformers) (0.24.1)
+Requirement already satisfied: safetensors&gt;=0.4.3 in /usr/local/lib/python3.12/dist-packages (from transformers) (0.7.0)
+Requirement already satisfied: tqdm&gt;=4.27 in /usr/local/lib/python3.12/dist-packages (from transformers) (4.67.3)
+Requirement already satisfied: filelock&gt;=3.10.0 in /usr/local/lib/python3.12/dist-packages (from huggingface-hub&lt;2.0,&gt;=1.5.0-&gt;transformers) (3.25.2)
+Requirement already satisfied: fsspec&gt;=2023.5.0 in /usr/local/lib/python3.12/dist-packages (from huggingface-hub&lt;2.0,&gt;=1.5.0-&gt;transformers) (2025.3.0)
+Requirement already satisfied: hf-xet&lt;2.0.0,&gt;=1.4.3 in /usr/local/lib/python3.12/dist-packages (from huggingface-hub&lt;2.0,&gt;=1.5.0-&gt;transformers) (1.4.3)
+Requirement already satisfied: httpx&lt;1,&gt;=0.23.0 in /usr/local/lib/python3.12/dist-packages (from huggingface-hub&lt;2.0,&gt;=1.5.0-&gt;transformers) (0.28.1)
+Requirement already satisfied: typing-extensions&gt;=4.1.0 in /usr/local/lib/python3.12/dist-packages (from huggingface-hub&lt;2.0,&gt;=1.5.0-&gt;transformers) (4.15.0)
+Requirement already satisfied: click&gt;=8.2.1 in /usr/local/lib/python3.12/dist-packages (from typer-&gt;transformers) (8.3.2)
+Requirement already satisfied: shellingham&gt;=1.3.0 in /usr/local/lib/python3.12/dist-packages (from typer-&gt;transformers) (1.5.4)
+Requirement already satisfied: rich&gt;=12.3.0 in /usr/local/lib/python3.12/dist-packages (from typer-&gt;transformers) (13.9.4)
+Requirement already satisfied: annotated-doc&gt;=0.0.2 in /usr/local/lib/python3.12/dist-packages (from typer-&gt;transformers) (0.0.4)
+Requirement already satisfied: anyio in /usr/local/lib/python3.12/dist-packages (from httpx&lt;1,&gt;=0.23.0-&gt;huggingface-hub&lt;2.0,&gt;=1.5.0-&gt;transformers) (4.13.0)
+Requirement already satisfied: certifi in /usr/local/lib/python3.12/dist-packages (from httpx&lt;1,&gt;=0.23.0-&gt;huggingface-hub&lt;2.0,&gt;=1.5.0-&gt;transformers) (2026.2.25)
+Requirement already satisfied: httpcore==1.* in /usr/local/lib/python3.12/dist-packages (from httpx&lt;1,&gt;=0.23.0-&gt;huggingface-hub&lt;2.0,&gt;=1.5.0-&gt;transformers) (1.0.9)
+Requirement already satisfied: idna in /usr/local/lib/python3.12/dist-packages (from httpx&lt;1,&gt;=0.23.0-&gt;huggingface-hub&lt;2.0,&gt;=1.5.0-&gt;transformers) (3.11)
+Requirement already satisfied: h11&gt;=0.16 in /usr/local/lib/python3.12/dist-packages (from httpcore==1.*-&gt;httpx&lt;1,&gt;=0.23.0-&gt;huggingface-hub&lt;2.0,&gt;=1.5.0-&gt;transformers) (0.16.0)
+Requirement already satisfied: markdown-it-py&gt;=2.2.0 in /usr/local/lib/python3.12/dist-packages (from rich&gt;=12.3.0-&gt;typer-&gt;transformers) (4.0.0)
+Requirement already satisfied: pygments&lt;3.0.0,&gt;=2.13.0 in /usr/local/lib/python3.12/dist-packages (from rich&gt;=12.3.0-&gt;typer-&gt;transformers) (2.20.0)
+Requirement already satisfied: mdurl~=0.1 in /usr/local/lib/python3.12/dist-packages (from markdown-it-py&gt;=2.2.0-&gt;rich&gt;=12.3.0-&gt;typer-&gt;transformers) (0.1.2)
+Downloading transformers-5.5.4-py3-none-any.whl (10.2 MB)
+[2K   [90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m10.2/10.2 MB[0m [31m76.9 MB/s[0m eta [36m0:00:00[0m
+[?25hInstalling collected packages: transformers
+  Attempting uninstall: transformers
+    Found existing installation: transformers 5.0.0
+    Uninstalling transformers-5.0.0:
+      Successfully uninstalled transformers-5.0.0
+Successfully installed transformers-5.5.4
+</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="cell cell-markdown">
+            <div class="cell-prompt prompt-empty">&nbsp;</div>
+            <div class="cell-content">
+                <div class="markdown-cell"><h2>Local Inference on GPU</h2><br>Model page: https://huggingface.co/facebook/bart-large-cnn<br><br>⚠️ If the generated code snippets do not work, please open an issue on either the [model repo](https://huggingface.co/facebook/bart-large-cnn)<br>			and/or on [huggingface.js](https://github.com/huggingface/huggingface.js/blob/main/packages/tasks/src/model-libraries-snippets.ts) 🙏</div>
+            </div>
+        </div>
+        <div class="cell cell-code">
+            <div class="cell-prompt input-prompt">In [2]:</div>
+            <div class="cell-content">
+                <div class="input-area"><pre># Use a pipeline as a high-level helper
+# Warning: Pipeline type "summarization" is no longer supported in transformers v5.
+# You must load the model directly (see below) or downgrade to v4.x with:
+# 'pip install "transformers&lt;5.0.0'
+# The model is loaded directly in the next cell (cell `mKSjFEji7ku1`).
+</pre></div>
+            </div>
+        </div>
+        <div class="cell cell-code">
+            <div class="cell-prompt input-prompt">In [3]:</div>
+            <div class="cell-content">
+                <div class="input-area"><pre>from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+
+tokenizer = AutoTokenizer.from_pretrained("facebook/bart-large-cnn")
+model = AutoModelForSeq2SeqLM.from_pretrained("facebook/bart-large-cnn")</pre></div>
+                <div class="output-area">
+                    <div class="output-wrapper">
+                        <div class="cell-prompt output-prompt"></div>
+                        <div class="output-content">
+                            <div class="output-stream output-stderr">/usr/local/lib/python3.12/dist-packages/huggingface_hub/utils/_auth.py:93: UserWarning: 
+The secret `HF_TOKEN` does not exist in your Colab secrets.
+To authenticate with the Hugging Face Hub, create a token in your settings tab (https://huggingface.co/settings/tokens), set it as secret in your Google Colab and restart your session.
+You will be able to reuse this secret in all of your notebooks.
+Please note that authentication is recommended but still optional to access public models or datasets.
+  warnings.warn(
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+WARNING:huggingface_hub.utils._http:Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+</div>
+                        </div>
+                    </div>
+                    <div class="output-wrapper">
+                        <div class="cell-prompt output-prompt"></div>
+                        <div class="output-content">
+                            <div class="output-result"><pre>config.json: 0.00B [00:00, ?B/s]</pre></div>
+                        </div>
+                    </div>
+                    <div class="output-wrapper">
+                        <div class="cell-prompt output-prompt"></div>
+                        <div class="output-content">
+                            <div class="output-result"><pre>vocab.json: 0.00B [00:00, ?B/s]</pre></div>
+                        </div>
+                    </div>
+                    <div class="output-wrapper">
+                        <div class="cell-prompt output-prompt"></div>
+                        <div class="output-content">
+                            <div class="output-result"><pre>merges.txt: 0.00B [00:00, ?B/s]</pre></div>
+                        </div>
+                    </div>
+                    <div class="output-wrapper">
+                        <div class="cell-prompt output-prompt"></div>
+                        <div class="output-content">
+                            <div class="output-result"><pre>tokenizer.json: 0.00B [00:00, ?B/s]</pre></div>
+                        </div>
+                    </div>
+                    <div class="output-wrapper">
+                        <div class="cell-prompt output-prompt"></div>
+                        <div class="output-content">
+                            <div class="output-result"><pre>model.safetensors:   0%|          | 0.00/1.63G [00:00&lt;?, ?B/s]</pre></div>
+                        </div>
+                    </div>
+                    <div class="output-wrapper">
+                        <div class="cell-prompt output-prompt"></div>
+                        <div class="output-content">
+                            <div class="output-stream output-stderr">Please make sure the generation config includes `forced_bos_token_id=0`. 
+</div>
+                        </div>
+                    </div>
+                    <div class="output-wrapper">
+                        <div class="cell-prompt output-prompt"></div>
+                        <div class="output-content">
+                            <div class="output-result"><pre>Loading weights:   0%|          | 0/511 [00:00&lt;?, ?it/s]</pre></div>
+                        </div>
+                    </div>
+                    <div class="output-wrapper">
+                        <div class="cell-prompt output-prompt"></div>
+                        <div class="output-content">
+                            <div class="output-result"><pre>generation_config.json:   0%|          | 0.00/363 [00:00&lt;?, ?B/s]</pre></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="cell cell-markdown">
+            <div class="cell-prompt prompt-empty">&nbsp;</div>
+            <div class="cell-content">
+                <div class="markdown-cell"><h2>Remote Inference via Inference Providers</h2><br>Ensure you have a valid <strong>HF_TOKEN</strong> set in your environment. You can get your token from [your settings page](https://huggingface.co/settings/tokens). Note: running this may incur charges above the free tier.<br>The following Python example shows how to run the model remotely on HF Inference Providers, automatically selecting an available inference provider for you.<br>For more information on how to use the Inference Providers, please refer to our [documentation and guides](https://huggingface.co/docs/inference-providers/en/index).</div>
+            </div>
+        </div>
+        <div class="cell cell-code">
+            <div class="cell-prompt input-prompt">In [4]:</div>
+            <div class="cell-content">
+                <div class="input-area"><pre>import os
+os.environ['HF_TOKEN'] = 'ADD TOKEN'</pre></div>
+            </div>
+        </div>
+        <div class="cell cell-code">
+            <div class="cell-prompt input-prompt">In [5]:</div>
+            <div class="cell-content">
+                <div class="input-area"><pre>import os
+from huggingface_hub import InferenceClient
+
+client = InferenceClient(
+    provider="auto",
+    api_key=os.environ["HF_TOKEN"],
+)
+
+result = client.summarization(
+    "The tower is 324 metres (1,063 ft) tall, about the same height as an 81-storey building, and the tallest structure in Paris. Its base is square, measuring 125 metres (410 ft) on each side. During its construction, the Eiffel Tower surpassed the Washington Monument to become the tallest man-made structure in the world, a title it held for 41 years until the Chrysler Building in New York City was finished in 1930. It was the first structure to reach a height of 300 metres. Due to the addition of a broadcasting aerial at the top of the tower in 1957, it is now taller than the Chrysler Building by 5.2 metres (17 ft). Excluding transmitters, the Eiffel Tower is the second tallest free-standing structure in France after the Millau Viaduct.",
+    model="facebook/bart-large-cnn",
+)</pre></div>
+            </div>
+        </div>
+        <div class="cell cell-code">
+            <div class="cell-prompt input-prompt">In [7]:</div>
+            <div class="cell-content">
+                <div class="input-area"><pre>import pandas as pd
+try:
+    df = pd.read_csv('/content/preprocessed.csv')
+    print("preprocessed.csv loaded successfully.")
+except FileNotFoundError:
+    print("Error: preprocessed.csv not found. Please ensure the file exists in /content/.")
+    exit()
+
+review_column = 'reviewText'
+
+if review_column not in df.columns:
+    print(f"Error: Column '{review_column}' not found in preprocessed.csv. Available columns: {df.columns.tolist()}")
+    exit()
+
+def count_words(text):
+    if isinstance(text, str):
+        return len(text.split())
+    return 0
+
+df['word_count'] = df[review_column].apply(count_words)
+long_reviews_df = df[df['word_count'] &gt; 100]
+
+selected_reviews = long_reviews_df.head(10)
+
+if selected_reviews.empty:
+    print("No reviews found with more than 100 words. Please check your data or adjust the word count threshold.")
+    exit()
+
+print(f"Selected {len(selected_reviews)} reviews with more than 100 words for summarization.")
+
+summarized_data = []
+for index, row in selected_reviews.iterrows():
+    review_text = row[review_column]
+    if not isinstance(review_text, str):
+        print(f"Skipping non-string review at index {index}: {review_text}")
+        continue
+
+    inputs = tokenizer([review_text], max_length=1024, truncation=True, return_tensors="pt")
+
+    summary_ids = model.generate(
+        inputs["input_ids"],
+        num_beams=4,
+        max_length=70,
+        min_length=40,
+        early_stopping=True
+    )
+    summary = [tokenizer.decode(g, skip_special_tokens=True, clean_up_tokenization_spaces=False) for g in summary_ids]
+
+    summarized_data.append({
+        'original_review': review_text,
+        'original_word_count': row['word_count'],
+        'summary': summary[0] if summary else "",
+        'summary_word_count': count_words(summary[0]) if summary else 0
+    })
+
+summarized_df = pd.DataFrame(summarized_data)
+
+output_filename = 'summarized_reviews.csv'
+summarized_df.to_csv(output_filename, index=False)
+
+print(f"Summarized data exported to {output_filename}")
+print("First 5 rows of the summarized data:")
+print(summarized_df.head())</pre></div>
+                <div class="output-area">
+                    <div class="output-wrapper">
+                        <div class="cell-prompt output-prompt"></div>
+                        <div class="output-content">
+                            <div class="output-stream">preprocessed.csv loaded successfully.
+Selected 10 reviews with more than 100 words for summarization.
+Summarized data exported to summarized_reviews.csv
+First 5 rows of the summarized data:
+                                     original_review  original_word_count  \
+0  I've been using Dreamweaver (and it's predeces...                  214   
+1  The demo is done with the PC version, with ref...                  435   
+2  I've been creating websites with Dreamweaver f...                  452   
+3  I decided (after trying a number of other prod...                  213   
+4  I spent several hours on the lesson and I love...                  141   
+
+                                             summary  summary_word_count  
+0  For someone who is an experienced web designer...                  56  
+1  The demo is done with the PC version, with ref...                  40  
+2  This is not an advanced tips and tricks resour...                  56  
+3  Learn Adobe Dreamweaver is an excellent compan...                  42  
+4  I spent several hours on the lesson and I love...                  43  
+</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="cell cell-code">
+            <div class="cell-prompt input-prompt">In [11]:</div>
+            <div class="cell-content">
+                <div class="input-area"><pre>import pandas as pd
+
+try:
+    summarized_df = pd.read_csv('summarized_reviews.csv')
+    print("summarized_reviews.csv loaded successfully.")
+except FileNotFoundError:
+    print("Error: summarized_reviews.csv not found. Please ensure the file exists.")
+    exit()
+
+question_review_text = None
+for index, row in summarized_df.iterrows():
+    if '?' in str(row['original_review']):
+        question_review_text = str(row['original_review'])
+        break
+
+if question_review_text:
+    selected_review = question_review_text
+    print(f"Found a review with a question:\nOriginal Review: {selected_review}")
+else:
+    if not summarized_df.empty:
+        selected_review = summarized_df.iloc[0]['original_review']
+        print("No review with an explicit question mark found. Proceeding with the first review for demonstration purposes:")
+        print(f"Original Review: {selected_review}")
+    else:
+        print("The 'summarized_reviews.csv' file is empty. Cannot proceed.")
+        exit()
+
+prompt = f"Given the following customer review, please provide a helpful and polite response as a service representative. Firstly ask for sorry and find a quick solution for the customer issue.\n\nCustomer Review: {selected_review}\n\nService Representative Response:"
+
+if 'tokenizer' not in locals() or 'model' not in locals():
+    print("Error: 'tokenizer' or 'model' not found. Please run cell mKSjFEji7ku1 first.")
+    exit()
+
+inputs = tokenizer([prompt], max_length=1024, truncation=True, return_tensors="pt")
+
+input_len = inputs["input_ids"].shape[1]
+
+response_ids = model.generate(
+    inputs["input_ids"],
+    num_beams=5,
+    max_length=input_len + 200,
+    min_length=input_len + 50,
+    early_stopping=True
+)
+
+generated_response_tokens = response_ids[0][input_len:]
+service_response = tokenizer.decode(generated_response_tokens, skip_special_tokens=True, clean_up_tokenization_spaces=False).strip()
+
+print(f"\nGenerated Service Representative Response:\n{service_response}")</pre></div>
+                <div class="output-area">
+                    <div class="output-wrapper">
+                        <div class="cell-prompt output-prompt"></div>
+                        <div class="output-content">
+                            <div class="output-stream">summarized_reviews.csv loaded successfully.
+Found a review with a question:
+Original Review: I have had Dreamweaver MX2004 since it came out back then. Spent years with it. Feel like I know it real well, but I am still familiar with tables as opposed to CSS. So I thought this would be a great introduction, and it is. The problem is that while I am looking at the video, and that simplifies things a lot, I am not getting the intuitive explanation as to why things work the way they do. I understand just knowing how to work them is sufficient. I'm tempted to delve into the rich full attributes of Dreamweaver CS5 as explained by this video, albeit difficult to understand the more advanced features, but I won't because this is about the video.
+
+The opening salvo is chock full of... for example, this is the URL; this is where you type in the address bar etc. Only when you start to get into areas such as CSS do you get an introduction that for me is beneficial, and that is only because I am somewhat of a newbie to it. So there you have it, do you get an advanced lesson that flies through things and most find it hard to understand, or do you get this one and appreciate the fact that she walks you through everything step by step, even at the risk of boring the more in the know people, but finally arriving at the section you need to learn, and then appreciate that she is not moving at lightning speed.
+
+I'm holding off buying Dreamweaver CS5, although I got the upgrade to Photoshop CS5 and love it, because my MX2004 is not an eligible upgrade version. If I could qualify for the upgrade I would grab it, but the learning curve of CSS, and the steep price for the full version when I have MX2004 already is giving me some hesitation. If I was to upgrade, or should I say take the leap to the full version, this tutorial is the one I would use, and I also recommend the&amp;nbsp;&lt;a data-hook="product-link-linked" class="a-link-normal" href="/Adobe-Dreamweaver-CS5-on-Demand/dp/0789744449/ref=cm_cr_arp_d_rvw_txt?ie=UTF8"&gt;Adobe Dreamweaver CS5 on Demand&lt;/a&gt;&amp;nbsp;which makes a very good reference guide.
+At some point I will get the new version of CS5 Dreamweaver, and at that point I will do the entire video series, and have a much more in depth analysis of it. But from what I can see after viewing a bunch of the video tutorials, it is the easiest way to indoctrinate you to the newest version. So I recommend it.
+
+Generated Service Representative Response:
+to start, but it's not the only thing to start with. It's also a great place to learn about the layout and how to use the search function. The search function is a great way to start. It can be a bit confusing at first, but once you get the hang of it, you'll find it very helpful.
+</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <footer class="export-footer">
+        Exported with <a href="https://www.runcell.dev/tool/ipynb-to-html">runcell</a> — convert notebooks to HTML or PDF anytime at runcell.dev.
+    </footer>
+</body>
+</html>
