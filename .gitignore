@@ -10,3 +10,6 @@ wheels/
 .venv
 
 /ignore
+
+# Cornac experiment logs
+CornacExp-*.log
