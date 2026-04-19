@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jupyter Notebook — generated with runcell</title>
+    <meta name="description" content="Exported with runcell — convert .ipynb notebooks to HTML or PDF anytime at runcell.dev." />
+    <meta name="generator" content="runcell" />
+    <style>
+        :root {
+            --jp-code-font-family: 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace;
+            --jp-content-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            --jp-cell-prompt-width: 64px;
+            --jp-input-prompt-color: #307fc1;
+            --jp-output-prompt-color: #bf5b3d;
+            --jp-cell-input-bg: #f7f7f7;
+            --jp-layout-color0: #ffffff;
+            --jp-layout-color1: #f7f7f7;
+            --jp-border-color1: #e0e0e0;
+            --jp-content-font-color0: #000000;
+            --jp-content-font-color1: #333333;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--jp-content-font-family);
+            font-size: 14px;
+            line-height: 1.5;
+            color: var(--jp-content-font-color0);
+            background-color: var(--jp-layout-color0);
+            margin: 0;
+            padding: 0;
+        }
+
+        .notebook-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Cell structure */
+        .cell {
+            display: flex;
+            flex-direction: row;
+            margin-bottom: 12px;
+            position: relative;
+        }
+
+        .cell-prompt {
+            min-width: var(--jp-cell-prompt-width);
+            width: var(--jp-cell-prompt-width);
+            font-family: var(--jp-code-font-family);
+            font-size: 12px;
+            padding: 10px 8px 10px 0;
+            text-align: right;
+            flex-shrink: 0;
+            user-select: none;
+        }
+
+        .cell-content {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        /* Input prompt styling - Jupyter blue */
+        .input-prompt {
+            color: var(--jp-input-prompt-color);
+            font-weight: bold;
+        }
+
+        /* Output prompt styling - Jupyter red/orange */
+        .output-prompt {
+            color: var(--jp-output-prompt-color);
+            font-weight: bold;
+        }
+
+        /* Code cell input area */
+        .input-area {
+            background-color: var(--jp-cell-input-bg);
+            border: 1px solid var(--jp-border-color1);
+            border-radius: 2px;
+            padding: 8px 12px;
+            overflow-x: auto;
+        }
+
+        .input-area pre {
+            margin: 0;
+            font-family: var(--jp-code-font-family);
+            font-size: 13px;
+            line-height: 1.4;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        /* Output area */
+        .output-area {
+            margin-top: 0;
+        }
+
+        .output-wrapper {
+            display: flex;
+            flex-direction: row;
+            margin-top: 4px;
+        }
+
+        .output-content {
+            flex: 1;
+            min-width: 0;
+            padding: 8px 0;
+        }
+
+        .output-content pre {
+            margin: 0;
+            font-family: var(--jp-code-font-family);
+            font-size: 13px;
+            line-height: 1.4;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        /* Stream output (stdout/stderr) */
+        .output-stream {
+            font-family: var(--jp-code-font-family);
+            font-size: 13px;
+            line-height: 1.4;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .output-stderr {
+            background-color: #fdd;
+            padding: 8px 12px;
+            border-radius: 2px;
+        }
+
+        /* Execute result / display data */
+        .output-result {
+            padding: 4px 0;
+        }
+
+        .output-result pre {
+            margin: 0;
+            font-family: var(--jp-code-font-family);
+            font-size: 13px;
+        }
+
+        /* Image output */
+        .output-image {
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* HTML output (DataFrames, etc.) */
+        .output-html {
+            overflow-x: auto;
+        }
+
+        .output-html table {
+            border-collapse: collapse;
+            font-size: 13px;
+            font-family: var(--jp-content-font-family);
+        }
+
+        .output-html table th,
+        .output-html table td {
+            border: 1px solid #ddd;
+            padding: 6px 10px;
+            text-align: left;
+        }
+
+        .output-html table th {
+            background-color: #f5f5f5;
+            font-weight: 600;
+        }
+
+        .output-html table tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+
+        /* Error output */
+        .output-error {
+            background-color: #fff0f0;
+            padding: 8px 12px;
+            border-radius: 2px;
+            font-family: var(--jp-code-font-family);
+            font-size: 13px;
+            white-space: pre-wrap;
+        }
+
+        /* Markdown cell styling */
+        .markdown-cell {
+            padding: 10px 0;
+        }
+
+        .markdown-cell h1 {
+            font-size: 2em;
+            font-weight: 600;
+            margin: 0.67em 0;
+            padding-bottom: 0.3em;
+            border-bottom: 1px solid var(--jp-border-color1);
+        }
+
+        .markdown-cell h2 {
+            font-size: 1.5em;
+            font-weight: 600;
+            margin: 0.83em 0;
+            padding-bottom: 0.3em;
+            border-bottom: 1px solid var(--jp-border-color1);
+        }
+
+        .markdown-cell h3 {
+            font-size: 1.25em;
+            font-weight: 600;
+            margin: 1em 0;
+        }
+
+        .markdown-cell h4 {
+            font-size: 1em;
+            font-weight: 600;
+            margin: 1.33em 0;
+        }
+
+        .markdown-cell h5 {
+            font-size: 0.875em;
+            font-weight: 600;
+            margin: 1.67em 0;
+        }
+
+        .markdown-cell h6 {
+            font-size: 0.85em;
+            font-weight: 600;
+            margin: 2.33em 0;
+            color: #6a737d;
+        }
+
+        .markdown-cell p {
+            margin: 0 0 16px 0;
+            line-height: 1.6;
+        }
+
+        .markdown-cell code {
+            font-family: var(--jp-code-font-family);
+            font-size: 85%;
+            background-color: rgba(27, 31, 35, 0.05);
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+        }
+
+        .markdown-cell pre {
+            background-color: var(--jp-cell-input-bg);
+            border: 1px solid var(--jp-border-color1);
+            border-radius: 3px;
+            padding: 16px;
+            overflow-x: auto;
+            font-size: 85%;
+            line-height: 1.45;
+        }
+
+        .markdown-cell pre code {
+            background-color: transparent;
+            padding: 0;
+            border-radius: 0;
+            font-size: 100%;
+        }
+
+        .markdown-cell blockquote {
+            margin: 0 0 16px 0;
+            padding: 0 1em;
+            color: #6a737d;
+            border-left: 4px solid #dfe2e5;
+        }
+
+        .markdown-cell ul,
+        .markdown-cell ol {
+            margin: 0 0 16px 0;
+            padding-left: 2em;
+        }
+
+        .markdown-cell li {
+            margin: 0.25em 0;
+        }
+
+        .markdown-cell a {
+            color: #0366d6;
+            text-decoration: none;
+        }
+
+        .markdown-cell a:hover {
+            text-decoration: underline;
+        }
+
+        .markdown-cell hr {
+            border: 0;
+            border-top: 1px solid var(--jp-border-color1);
+            margin: 24px 0;
+        }
+
+        .markdown-cell img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .markdown-cell table {
+            border-collapse: collapse;
+            margin: 0 0 16px 0;
+        }
+
+        .markdown-cell table th,
+        .markdown-cell table td {
+            border: 1px solid #dfe2e5;
+            padding: 6px 13px;
+        }
+
+        .markdown-cell table th {
+            font-weight: 600;
+            background-color: #f6f8fa;
+        }
+
+        .markdown-cell table tr:nth-child(2n) {
+            background-color: #f6f8fa;
+        }
+
+        /* Raw cell styling */
+        .raw-cell {
+            background-color: var(--jp-layout-color1);
+            border: 1px solid var(--jp-border-color1);
+            border-radius: 2px;
+            padding: 8px 12px;
+            font-family: var(--jp-code-font-family);
+            font-size: 13px;
+            white-space: pre-wrap;
+        }
+
+        /* Empty prompt placeholder */
+        .prompt-empty {
+            color: transparent;
+        }
+
+        .export-footer {
+            margin-top: 32px;
+            padding-top: 16px;
+            border-top: 1px solid var(--jp-border-color1);
+            color: #555;
+            font-size: 13px;
+            text-align: center;
+        }
+
+        .export-footer a {
+            color: #0366d6;
+            text-decoration: none;
+        }
+
+        .export-footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="notebook-container">
+        <div class="cell cell-code">
+            <div class="cell-prompt input-prompt">In [ ]:</div>
+            <div class="cell-content">
+                <div class="input-area"><pre>!pip install -U transformers</pre></div>
+            </div>
+        </div>
+        <div class="cell cell-markdown">
+            <div class="cell-prompt prompt-empty">&nbsp;</div>
+            <div class="cell-content">
+                <div class="markdown-cell"><h2>Local Inference on GPU</h2><br>Model page: https://huggingface.co/google/flan-t5-base<br><br>⚠️ If the generated code snippets do not work, please open an issue on either the [model repo](https://huggingface.co/google/flan-t5-base)<br>			and/or on [huggingface.js](https://github.com/huggingface/huggingface.js/blob/main/packages/tasks/src/model-libraries-snippets.ts) 🙏</div>
+            </div>
+        </div>
+        <div class="cell cell-code">
+            <div class="cell-prompt input-prompt">In [1]:</div>
+            <div class="cell-content">
+                <div class="input-area"><pre># Load model directly
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+
+tokenizer = AutoTokenizer.from_pretrained("google/flan-t5-base")
+model = AutoModelForSeq2SeqLM.from_pretrained("google/flan-t5-base")</pre></div>
+                <div class="output-area">
+                    <div class="output-wrapper">
+                        <div class="cell-prompt output-prompt"></div>
+                        <div class="output-content">
+                            <div class="output-stream output-stderr">/usr/local/lib/python3.12/dist-packages/huggingface_hub/utils/_auth.py:93: UserWarning: 
+The secret `HF_TOKEN` does not exist in your Colab secrets.
+To authenticate with the Hugging Face Hub, create a token in your settings tab (https://huggingface.co/settings/tokens), set it as secret in your Google Colab and restart your session.
+You will be able to reuse this secret in all of your notebooks.
+Please note that authentication is recommended but still optional to access public models or datasets.
+  warnings.warn(
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+WARNING:huggingface_hub.utils._http:Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+</div>
+                        </div>
+                    </div>
+                    <div class="output-wrapper">
+                        <div class="cell-prompt output-prompt"></div>
+                        <div class="output-content">
+                            <div class="output-result"><pre>config.json: 0.00B [00:00, ?B/s]</pre></div>
+                        </div>
+                    </div>
+                    <div class="output-wrapper">
+                        <div class="cell-prompt output-prompt"></div>
+                        <div class="output-content">
+                            <div class="output-result"><pre>tokenizer_config.json: 0.00B [00:00, ?B/s]</pre></div>
+                        </div>
+                    </div>
+                    <div class="output-wrapper">
+                        <div class="cell-prompt output-prompt"></div>
+                        <div class="output-content">
+                            <div class="output-result"><pre>spiece.model:   0%|          | 0.00/792k [00:00&lt;?, ?B/s]</pre></div>
+                        </div>
+                    </div>
+                    <div class="output-wrapper">
+                        <div class="cell-prompt output-prompt"></div>
+                        <div class="output-content">
+                            <div class="output-result"><pre>tokenizer.json: 0.00B [00:00, ?B/s]</pre></div>
+                        </div>
+                    </div>
+                    <div class="output-wrapper">
+                        <div class="cell-prompt output-prompt"></div>
+                        <div class="output-content">
+                            <div class="output-result"><pre>special_tokens_map.json: 0.00B [00:00, ?B/s]</pre></div>
+                        </div>
+                    </div>
+                    <div class="output-wrapper">
+                        <div class="cell-prompt output-prompt"></div>
+                        <div class="output-content">
+                            <div class="output-result"><pre>model.safetensors:   0%|          | 0.00/990M [00:00&lt;?, ?B/s]</pre></div>
+                        </div>
+                    </div>
+                    <div class="output-wrapper">
+                        <div class="cell-prompt output-prompt"></div>
+                        <div class="output-content">
+                            <div class="output-result"><pre>Loading weights:   0%|          | 0/282 [00:00&lt;?, ?it/s]</pre></div>
+                        </div>
+                    </div>
+                    <div class="output-wrapper">
+                        <div class="cell-prompt output-prompt"></div>
+                        <div class="output-content">
+                            <div class="output-stream output-stderr">The tied weights mapping and config for this model specifies to tie shared.weight to lm_head.weight, but both are present in the checkpoints, so we will NOT tie them. You should update the config with `tie_word_embeddings=False` to silence this warning
+</div>
+                        </div>
+                    </div>
+                    <div class="output-wrapper">
+                        <div class="cell-prompt output-prompt"></div>
+                        <div class="output-content">
+                            <div class="output-result"><pre>generation_config.json:   0%|          | 0.00/147 [00:00&lt;?, ?B/s]</pre></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="cell cell-code">
+            <div class="cell-prompt input-prompt">In [2]:</div>
+            <div class="cell-content">
+                <div class="input-area"><pre>import pandas as pd
+
+df = pd.read_csv("summarized_reviews.csv")
+
+print(df.columns.tolist())
+print(f"Total rows: {len(df)}")</pre></div>
+                <div class="output-area">
+                    <div class="output-wrapper">
+                        <div class="cell-prompt output-prompt"></div>
+                        <div class="output-content">
+                            <div class="output-stream">['original_review', 'original_word_count', 'summary', 'summary_word_count']
+Total rows: 10
+</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="cell cell-code">
+            <div class="cell-prompt input-prompt">In [3]:</div>
+            <div class="cell-content">
+                <div class="input-area"><pre>
+question_reviews = df[df["original_review"].astype(str).str.contains(r"\?", regex=True, na=False)]
+
+if not question_reviews.empty:
+    selected_review = question_reviews.iloc[0]["original_review"]
+    print("Selected review with question mark:\n")
+    print(selected_review)
+else:
+    print("No review with '?' found. Trying a question-like pattern...")
+
+    question_patterns = r"\b(how|why|what|when|where|can|could|would|should|is it|does it|do you)\b"
+    question_reviews = df[df["original_review"].astype(str).str.contains(question_patterns, case=False, regex=True, na=False)]
+
+    if not question_reviews.empty:
+        selected_review = question_reviews.iloc[0]["original_review"]
+        print("Selected review with question-like wording:\n")
+        print(selected_review)
+    else:
+        raise ValueError("No question-type review found in summarized_reviews.csv")</pre></div>
+                <div class="output-area">
+                    <div class="output-wrapper">
+                        <div class="cell-prompt output-prompt"></div>
+                        <div class="output-content">
+                            <div class="output-stream">Selected review with question mark:
+
+I have had Dreamweaver MX2004 since it came out back then. Spent years with it. Feel like I know it real well, but I am still familiar with tables as opposed to CSS. So I thought this would be a great introduction, and it is. The problem is that while I am looking at the video, and that simplifies things a lot, I am not getting the intuitive explanation as to why things work the way they do. I understand just knowing how to work them is sufficient. I'm tempted to delve into the rich full attributes of Dreamweaver CS5 as explained by this video, albeit difficult to understand the more advanced features, but I won't because this is about the video.
+
+The opening salvo is chock full of... for example, this is the URL; this is where you type in the address bar etc. Only when you start to get into areas such as CSS do you get an introduction that for me is beneficial, and that is only because I am somewhat of a newbie to it. So there you have it, do you get an advanced lesson that flies through things and most find it hard to understand, or do you get this one and appreciate the fact that she walks you through everything step by step, even at the risk of boring the more in the know people, but finally arriving at the section you need to learn, and then appreciate that she is not moving at lightning speed.
+
+I'm holding off buying Dreamweaver CS5, although I got the upgrade to Photoshop CS5 and love it, because my MX2004 is not an eligible upgrade version. If I could qualify for the upgrade I would grab it, but the learning curve of CSS, and the steep price for the full version when I have MX2004 already is giving me some hesitation. If I was to upgrade, or should I say take the leap to the full version, this tutorial is the one I would use, and I also recommend the&amp;nbsp;&lt;a data-hook="product-link-linked" class="a-link-normal" href="/Adobe-Dreamweaver-CS5-on-Demand/dp/0789744449/ref=cm_cr_arp_d_rvw_txt?ie=UTF8"&gt;Adobe Dreamweaver CS5 on Demand&lt;/a&gt;&amp;nbsp;which makes a very good reference guide.
+At some point I will get the new version of CS5 Dreamweaver, and at that point I will do the entire video series, and have a much more in depth analysis of it. But from what I can see after viewing a bunch of the video tutorials, it is the easiest way to indoctrinate you to the newest version. So I recommend it.
+</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="cell cell-code">
+            <div class="cell-prompt input-prompt">In [4]:</div>
+            <div class="cell-content">
+                <div class="input-area"><pre>
+prompt = f"""
+You are a customer service representative.
+
+Read the customer review below and write a polite and helpful response.
+Start with an apology, address the customer's concern clearly, and suggest a practical solution.
+
+Customer review:
+{selected_review}
+
+Response:
+"""
+
+print(prompt)</pre></div>
+                <div class="output-area">
+                    <div class="output-wrapper">
+                        <div class="cell-prompt output-prompt"></div>
+                        <div class="output-content">
+                            <div class="output-stream">
+You are a customer service representative.
+
+Read the customer review below and write a polite and helpful response.
+Start with an apology, address the customer's concern clearly, and suggest a practical solution.
+
+Customer review:
+I have had Dreamweaver MX2004 since it came out back then. Spent years with it. Feel like I know it real well, but I am still familiar with tables as opposed to CSS. So I thought this would be a great introduction, and it is. The problem is that while I am looking at the video, and that simplifies things a lot, I am not getting the intuitive explanation as to why things work the way they do. I understand just knowing how to work them is sufficient. I'm tempted to delve into the rich full attributes of Dreamweaver CS5 as explained by this video, albeit difficult to understand the more advanced features, but I won't because this is about the video.
+
+The opening salvo is chock full of... for example, this is the URL; this is where you type in the address bar etc. Only when you start to get into areas such as CSS do you get an introduction that for me is beneficial, and that is only because I am somewhat of a newbie to it. So there you have it, do you get an advanced lesson that flies through things and most find it hard to understand, or do you get this one and appreciate the fact that she walks you through everything step by step, even at the risk of boring the more in the know people, but finally arriving at the section you need to learn, and then appreciate that she is not moving at lightning speed.
+
+I'm holding off buying Dreamweaver CS5, although I got the upgrade to Photoshop CS5 and love it, because my MX2004 is not an eligible upgrade version. If I could qualify for the upgrade I would grab it, but the learning curve of CSS, and the steep price for the full version when I have MX2004 already is giving me some hesitation. If I was to upgrade, or should I say take the leap to the full version, this tutorial is the one I would use, and I also recommend the&amp;nbsp;&lt;a data-hook="product-link-linked" class="a-link-normal" href="/Adobe-Dreamweaver-CS5-on-Demand/dp/0789744449/ref=cm_cr_arp_d_rvw_txt?ie=UTF8"&gt;Adobe Dreamweaver CS5 on Demand&lt;/a&gt;&amp;nbsp;which makes a very good reference guide.
+At some point I will get the new version of CS5 Dreamweaver, and at that point I will do the entire video series, and have a much more in depth analysis of it. But from what I can see after viewing a bunch of the video tutorials, it is the easiest way to indoctrinate you to the newest version. So I recommend it.
+
+Response:
+
+</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="cell cell-code">
+            <div class="cell-prompt input-prompt">In [5]:</div>
+            <div class="cell-content">
+                <div class="input-area"><pre>
+inputs = tokenizer(
+    prompt,
+    return_tensors="pt",
+    truncation=True,
+    max_length=512
+)
+
+
+outputs = model.generate(
+    **inputs,
+    max_new_tokens=120,
+    num_beams=4,
+    temperature=0.7,
+    early_stopping=True
+)
+
+generated_response = tokenizer.decode(outputs[0], skip_special_tokens=True)
+
+print("Generated service response:\n")
+print(generated_response)</pre></div>
+                <div class="output-area">
+                    <div class="output-wrapper">
+                        <div class="cell-prompt output-prompt"></div>
+                        <div class="output-content">
+                            <div class="output-stream output-stderr">The following generation flags are not valid and may be ignored: ['temperature']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+</div>
+                        </div>
+                    </div>
+                    <div class="output-wrapper">
+                        <div class="cell-prompt output-prompt"></div>
+                        <div class="output-content">
+                            <div class="output-stream">Generated service response:
+
+I'm sorry to hear that Dreamweaver MX2004 doesn't have a tutorial. I'm sorry to hear that. I'm sorry to hear that Dreamweaver MX2004 doesn't have a tutorial.
+</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="cell cell-code">
+            <div class="cell-prompt input-prompt">In [6]:</div>
+            <div class="cell-content">
+                <div class="input-area"><pre>
+result_df = pd.DataFrame({
+    "selected_review": [selected_review],
+    "generated_response": [generated_response]
+})
+
+result_df.to_csv("task17_response.csv", index=False)
+print("Saved to task17_response.csv")</pre></div>
+                <div class="output-area">
+                    <div class="output-wrapper">
+                        <div class="cell-prompt output-prompt"></div>
+                        <div class="output-content">
+                            <div class="output-stream">Saved to task17_response.csv
+</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <footer class="export-footer">
+        Exported with <a href="https://www.runcell.dev/tool/ipynb-to-html">runcell</a> — convert notebooks to HTML or PDF anytime at runcell.dev.
+    </footer>
+</body>
+</html>
